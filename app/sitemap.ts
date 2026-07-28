@@ -6,7 +6,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteConfig.url;
   const routes: MetadataRoute.Sitemap = [
     { url: `${base}/`, lastModified: new Date(), priority: 1, changeFrequency: "monthly" },
-    { url: `${base}/index`, lastModified: new Date(), priority: 0.9, changeFrequency: "monthly" },
+    { url: `${base}/toc`, lastModified: new Date(), priority: 0.9, changeFrequency: "monthly" },
   ];
 
   for (const book of getToc()) {

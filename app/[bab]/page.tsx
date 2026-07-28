@@ -57,7 +57,7 @@ export default async function ChapterPage({
 
       <div className="mt-10 flex justify-start">
         <Button asChild variant="outline">
-          <Link href="/index">
+          <Link href="/toc">
             عرض الفهرس الكامل
             <ArrowLeft className="h-4 w-4" />
           </Link>

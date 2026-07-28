@@ -16,7 +16,7 @@ export const siteConfig = {
   ],
   nav: [
     { label: "الرئيسية", href: "/" },
-    { label: "الفهرس العام", href: "/index" },
+    { label: "الفهرس العام", href: "/toc" },
   ],
 } as const;
 

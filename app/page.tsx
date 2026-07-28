@@ -54,7 +54,7 @@ export default function HomePage() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/index">
+                <Link href="/toc">
                   <BookOpen className="h-4 w-4" />
                   الفهرس العام
                 </Link>

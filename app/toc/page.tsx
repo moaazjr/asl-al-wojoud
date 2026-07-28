@@ -6,7 +6,7 @@ import { getToc } from "@/lib/content";
 export const metadata: Metadata = {
   title: "الفهرس العام",
   description: "الأبواب السبعة بكلّ فصولها ومباحثها في كتاب أصل الوجود.",
-  alternates: { canonical: "/index" },
+  alternates: { canonical: "/toc" },
 };
 
 export default function IndexPage() {
