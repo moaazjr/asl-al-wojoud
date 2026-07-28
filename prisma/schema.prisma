@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Kind {
+  HIGHLIGHT
+  DISCUSSION
+}
+
+enum DiscussionStatus {
+  OPEN
+  RESOLVED
+}
+
+model User {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  role         Role           @default(USER)
+  createdAt    DateTime       @default(now())
+
+  discussions  Discussion[]   @relation("DiscussionAuthor")
+  messages     Message[]
+  notifications Notification[]
+  sessions     Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Discussion {
+  id             String           @id @default(cuid())
+  kind           Kind             @default(DISCUSSION)
+  sectionId      String
+  sectionTitle   String
+  bookTitle      String
+  blockIndex     Int
+  selectedText   String
+  charStart      Int
+  charEnd        Int
+  status         DiscussionStatus @default(OPEN)
+  resolvedAt     DateTime?
+  resolvedById   String?
+  pinnedMessageId String?
+  hasAdminReply  Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+
+  createdBy      User             @relation("DiscussionAuthor", fields: [createdById], references: [id], onDelete: Cascade)
+  createdById    String
+  messages       Message[]
+
+  @@index([sectionId])
+  @@index([createdById])
+  @@index([status])
+}
+
+model Message {
+  id           String   @id @default(cuid())
+  discussion   Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  discussionId String
+  author       User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId     String
+  authorName   String
+  authorRole   Role
+  text         String
+  pinned       Boolean  @default(false)
+  likes        String[] @default([])
+  createdAt    DateTime @default(now())
+  editedAt     DateTime?
+  parentMessageId String?
+  parent       Message?  @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: Cascade)
+  replies      Message[] @relation("MessageReplies")
+
+  @@index([discussionId])
+  @@index([parentMessageId])
+}
+
+model Notification {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  type         String
+  discussionId String
+  sectionId    String
+  sectionTitle String
+  text         String
+  read         Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+}
