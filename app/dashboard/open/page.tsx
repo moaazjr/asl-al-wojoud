@@ -4,7 +4,7 @@ import { PageHeader } from "../_components/page-header";
 export default function OpenDiscussionsPage() {
   return (
     <div className="space-y-4">
-      <PageHeader title="النقاشات المفتوحة" desc="النقاشات التي تنتظر ردًا" />
+      <PageHeader title="التعليقات المفتوحة" desc="التعليقات التي تنتظر ردّ المشرف" />
       <DiscussionsManager lockFilter="open" />
     </div>
   );

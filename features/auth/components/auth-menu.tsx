@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Loader2,
   ChevronDown,
+  MessagesSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
@@ -78,8 +79,8 @@ export function AuthMenu() {
         )}
         <DropdownMenuItem asChild>
           <Link href="/my-discussions">
-            <LayoutDashboard className="h-4 w-4" />
-            نقاشاتي
+            <MessagesSquare className="h-4 w-4" />
+            تعليقاتي
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

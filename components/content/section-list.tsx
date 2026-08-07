@@ -1,21 +1,33 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { TocSection } from "@/types/content";
+import { cn } from "@/lib/utils";
+
+function chapterHref(bookNumber: number, num: string, slug: string) {
+  const parts = num.split(".");
+  if (parts.length <= 2) return `/${bookNumber}/${slug}`;
+  return `/${bookNumber}/${parts.slice(0, 2).join("-")}#toc-${slug}`;
+}
 
 export function SectionList({
   sections,
   bookNumber,
+  anchor = false,
 }: {
   sections: TocSection[];
   bookNumber: number;
+  anchor?: boolean;
 }) {
   return (
     <ul className="divide-y divide-line-soft">
       {sections.map((section) => (
-        <li key={section.num}>
+        <li key={section.num} id={anchor ? `toc-${section.slug}` : undefined}>
           <Link
-            href={`/${bookNumber}/${section.slug}`}
-            className="group flex items-start gap-3 py-4 transition-colors hover:bg-paper-deep/50"
+            href={chapterHref(bookNumber, section.num, section.slug)}
+            className={cn(
+              "group flex items-start gap-3 py-4 transition-colors hover:bg-paper-deep/50",
+              anchor && "scroll-mt-24",
+            )}
           >
             <span className="mt-0.5 shrink-0 font-kufi text-xs font-semibold text-accent-bright">
               {section.num}
@@ -42,7 +54,7 @@ export function SectionList({
               {section.children.slice(0, 8).map((child) => (
                 <li key={child.num}>
                   <Link
-                    href={`/${bookNumber}/${child.slug}`}
+                    href={chapterHref(bookNumber, child.num, child.slug)}
                     className="group flex items-center gap-3 py-2.5 transition-colors hover:text-accent"
                   >
                     <span className="shrink-0 font-kufi text-xs text-ink-faint">

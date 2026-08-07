@@ -127,7 +127,13 @@ export function SearchDialog({
   const navigate = React.useCallback(
     (doc: SearchDoc) => {
       onOpenChange(false);
-      router.push(`/${doc.bn}/${doc.s}`);
+      const parts = doc.n.split(".");
+      if (parts.length <= 2) {
+        router.push(`/${doc.bn}/${doc.s}`);
+        return;
+      }
+      const chapterSlug = parts.slice(0, 2).join("-");
+      router.push(`/${doc.bn}/${chapterSlug}#toc-${doc.s}`);
     },
     [onOpenChange, router],
   );

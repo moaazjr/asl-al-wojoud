@@ -26,7 +26,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const discussion = await prisma.discussion.findUnique({
     where: { id },
   });
-  if (!discussion) return errorResponse("النقاش غير موجود", 404);
+  if (!discussion) return errorResponse("التعليق غير موجود", 404);
 
   const isAdmin = user.role === "admin";
   if (!isAdmin) {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         discussionId: discussion.id,
         sectionId: discussion.sectionId,
         sectionTitle: discussion.sectionTitle,
-        text: `ردّ المشرف على نقاشك: «${discussion.selectedText.slice(0, 60)}»`,
+        text: `ردّ المشرف على تعليقك في «${discussion.sectionTitle}»`,
       },
     });
   }

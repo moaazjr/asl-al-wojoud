@@ -38,16 +38,13 @@ export function DiscussionsManager({
   const [active, setActive] = React.useState<Discussion | null>(null);
   const [open, setOpen] = React.useState(false);
 
-  const threads = discussions.filter((d) => d.kind === "discussion");
-
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    return threads.filter((d) => {
+    return discussions.filter((d) => {
       if (lockFilter && d.status !== lockFilter) return false;
       if (!lockFilter && tab !== "all" && d.status !== tab) return false;
       if (!q) return true;
       return (
-        d.selectedText.toLowerCase().includes(q) ||
         d.sectionTitle.toLowerCase().includes(q) ||
         d.messages.some(
           (m) =>
@@ -56,11 +53,11 @@ export function DiscussionsManager({
         )
       );
     });
-  }, [threads, query, tab, lockFilter]);
+  }, [discussions, query, tab, lockFilter]);
 
   const selectedIds = React.useMemo(
-    () => Array.from(selected).filter((id) => threads.some((d) => d.id === id)),
-    [selected, threads],
+    () => Array.from(selected).filter((id) => discussions.some((d) => d.id === id)),
+    [selected, discussions],
   );
 
   function openThread(d: Discussion) {
@@ -76,7 +73,7 @@ export function DiscussionsManager({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ابحث في النقاشات والتعليقات…"
+            placeholder="ابحث في التعليقات…"
             className="ps-9"
           />
         </div>
@@ -109,7 +106,7 @@ export function DiscussionsManager({
             variant="outline"
             className="text-rose-600 dark:text-rose-400"
             onClick={() => {
-              if (confirm(`حذف ${selectedIds.length} نقاش؟`))
+              if (confirm(`حذف ${selectedIds.length} تعليق؟`))
                 void deleteMany(selectedIds);
             }}
           >
@@ -128,7 +125,7 @@ export function DiscussionsManager({
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-12 text-center">
           <Inbox className="h-6 w-6 text-ink-faint" />
-          <p className="font-kufi text-sm text-ink-faint">لا توجد نقاشات</p>
+          <p className="font-kufi text-sm text-ink-faint">لا توجد تعليقات</p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-line bg-card">
@@ -168,7 +165,7 @@ export function DiscussionsManager({
                   </span>
                 </div>
                 <p className="mt-1.5 line-clamp-2 font-naskh text-sm leading-relaxed text-ink-soft">
-                  {d.selectedText}
+                  {d.messages[0]?.text ?? "…"}
                 </p>
                 <div className="mt-1.5 flex items-center gap-3 font-kufi text-xs text-ink-faint">
                   <span className="inline-flex items-center gap-1">
@@ -201,7 +198,7 @@ export function DiscussionsManager({
                 <button
                   title="حذف"
                   onClick={() => {
-                    if (confirm("حذف هذا النقاش؟")) void deleteMany([d.id]);
+                    if (confirm("حذف هذا التعليق؟")) void deleteMany([d.id]);
                   }}
                   className="rounded-md p-1.5 text-ink-faint transition-colors hover:bg-paper-deep hover:text-rose-600"
                 >

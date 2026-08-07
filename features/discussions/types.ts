@@ -1,7 +1,14 @@
-import type { User } from "@/interfaces/types";
+import type { Discussion, User } from "@/interfaces/types";
+
+export interface CommentMeta {
+  sectionId: string;
+  sectionTitle: string;
+  bookTitle: string;
+}
 
 export interface DiscussionActions {
   user: User | null;
+  createComment: (text: string, meta?: CommentMeta) => Promise<Discussion | null>;
   addMessage: (discussionId: string, text: string, replyToMessageId?: string) => Promise<void>;
   toggleLike: (
     discussionId: string,

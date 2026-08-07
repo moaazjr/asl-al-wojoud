@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import type { NavBook, NavNode } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
@@ -12,102 +12,11 @@ function useActiveRoute() {
   return React.useMemo(() => {
     const parts = pathname.split("/").filter(Boolean);
     const book = parts[0] ? parseInt(parts[0], 10) : NaN;
-    const slug = parts[1];
-    const activeNum = slug ? slug.replace(/-/g, ".") : "";
-    const ancestorNums = new Set<string>();
-    if (activeNum) {
-      const segs = activeNum.split(".");
-      for (let i = 1; i <= segs.length; i++) {
-        ancestorNums.add(segs.slice(0, i).join("."));
-      }
-    }
     return {
       book: Number.isNaN(book) ? 0 : book,
-      slug: slug ?? "",
-      ancestorNums,
+      slug: parts[1] ?? "",
     };
   }, [pathname]);
-}
-
-interface ActiveState {
-  book: number;
-  slug: string;
-  ancestorNums: Set<string>;
-}
-
-function SectionRow({
-  node,
-  bookNumber,
-  level,
-  active,
-  isOpen,
-  onToggle,
-}: {
-  node: NavNode;
-  bookNumber: number;
-  level: number;
-  active: ActiveState;
-  isOpen: boolean;
-  onToggle: (key: string) => void;
-}) {
-  const href = `/${bookNumber}/${node.slug}`;
-  const isActive = active.book === bookNumber && active.slug === node.slug;
-  const hasChildren = node.children.length > 0;
-
-  return (
-    <div>
-      <div
-        className="group flex items-center gap-1 rounded-md transition-colors"
-        style={{ paddingInlineStart: `${level * 0.85}rem` }}
-      >
-        {hasChildren ? (
-          <button
-            type="button"
-            aria-label={isOpen ? "طي القسم" : "فتح القسم"}
-            aria-expanded={isOpen}
-            onClick={() => onToggle(node.num)}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-ink-faint transition-transform hover:text-ink"
-          >
-            <ChevronLeft
-              className={cn(
-                "h-3.5 w-3.5 transition-transform duration-200",
-                isOpen && "-rotate-90",
-              )}
-            />
-          </button>
-        ) : (
-          <span className="w-7 shrink-0" />
-        )}
-        <Link
-          href={href}
-          aria-current={isActive ? "page" : undefined}
-          className={cn(
-            "flex-1 truncate rounded-md py-1.5 pr-1 font-kufi text-[0.86rem] leading-snug transition-colors",
-            isActive
-              ? "bg-accent-soft font-semibold text-accent"
-              : "text-ink-soft hover:text-ink",
-          )}
-        >
-          {node.title}
-        </Link>
-      </div>
-      {hasChildren && isOpen && (
-        <div className="border-s border-line-soft ps-2">
-          {node.children.map((child) => (
-            <SectionRow
-              key={child.num}
-              node={child}
-              bookNumber={bookNumber}
-              level={level + 1}
-              active={active}
-              isOpen={active.ancestorNums.has(child.num)}
-              onToggle={onToggle}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 export function SidebarContent({
@@ -119,16 +28,6 @@ export function SidebarContent({
 }) {
   const active = useActiveRoute();
   const [query, setQuery] = React.useState("");
-  const [openSet, setOpenSet] = React.useState<Set<string>>(new Set());
-
-  const toggle = React.useCallback((key: string) => {
-    setOpenSet((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }, []);
 
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -224,18 +123,12 @@ export function SidebarContent({
             )}
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-4">
             {books.map((book) => (
               <BookGroup
                 key={book.number}
                 book={book}
                 active={active}
-                isOpen={
-                  active.book === book.number ||
-                  openSet.has(`book:${book.number}`)
-                }
-                onToggle={toggle}
-                bookKey={`book:${book.number}`}
                 onNavigate={onNavigate}
               />
             ))}
@@ -249,67 +142,57 @@ export function SidebarContent({
 function BookGroup({
   book,
   active,
-  isOpen,
-  onToggle,
-  bookKey,
   onNavigate,
 }: {
   book: NavBook;
-  active: ActiveState;
-  isOpen: boolean;
-  onToggle: (key: string) => void;
-  bookKey: string;
+  active: { book: number; slug: string };
   onNavigate?: () => void;
 }) {
   const isActiveBook = active.book === book.number;
 
   return (
-    <div className="border-b border-line-soft pb-1">
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          aria-label={isOpen ? "طي الباب" : "فتح الباب"}
-          aria-expanded={isOpen}
-          onClick={() => onToggle(bookKey)}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-ink-faint transition-transform hover:text-ink"
-        >
-          <ChevronLeft
-            className={cn(
-              "h-4 w-4 transition-transform duration-200",
-              isOpen && "-rotate-90",
-            )}
-          />
-        </button>
-        <Link
-          href={`/${book.slug}`}
-          onClick={onNavigate}
-          className={cn(
-            "flex flex-1 items-center gap-2 rounded-md py-1.5 font-kufi text-sm transition-colors",
-            isActiveBook && !active.slug
-              ? "font-bold text-accent"
-              : "font-semibold text-ink hover:text-accent",
-          )}
-        >
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-accent/12 font-kufi text-xs font-bold text-accent">
-            {book.titleArabic}
-          </span>
-          <span className="leading-tight">{book.titleOnly}</span>
-        </Link>
-      </div>
-      {isOpen && (
-        <div className="mt-0.5 space-y-0.5 ps-2">
-          {book.children.map((node) => (
-            <SectionRow
-              key={node.num}
-              node={node}
-              bookNumber={book.number}
-              level={0}
-              active={active}
-              isOpen={active.ancestorNums.has(node.num)}
-              onToggle={onToggle}
-            />
-          ))}
-        </div>
+    <div>
+      <Link
+        href={`/${book.slug}`}
+        onClick={onNavigate}
+        className={cn(
+          "flex items-center gap-2 rounded-md py-1.5 font-kufi text-sm transition-colors",
+          isActiveBook && !active.slug
+            ? "font-bold text-accent"
+            : "font-semibold text-ink hover:text-accent",
+        )}
+      >
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-accent/12 font-kufi text-xs font-bold text-accent">
+          {book.titleArabic}
+        </span>
+        <span className="leading-tight">{book.titleOnly}</span>
+      </Link>
+      {book.children.length > 0 && (
+        <ul className="mt-1 space-y-0.5 border-s border-line-soft ps-2">
+          {book.children.map((node) => {
+            const isActive = isActiveBook && active.slug === node.slug;
+            return (
+              <li key={node.num}>
+                <Link
+                  href={`/${book.number}/${node.slug}`}
+                  onClick={onNavigate}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "flex items-baseline gap-1.5 rounded-md py-1 pe-2 font-kufi text-[0.82rem] leading-snug transition-colors",
+                    isActive
+                      ? "bg-accent-soft font-semibold text-accent"
+                      : "text-ink-soft hover:text-ink",
+                  )}
+                >
+                  <span className="shrink-0 font-kufi text-[0.62rem] text-accent-bright/80">
+                    {node.num}
+                  </span>
+                  <span className="truncate">{node.title}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

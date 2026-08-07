@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const user = await requireUser();
     if (!user) return errorResponse("غير مصرّح", 401);
     const rows = await prisma.discussion.findMany({
-      where: { createdById: user.id },
+      where: { kind: "DISCUSSION", createdById: user.id },
       include: { messages: true },
     });
     return json(sortDiscussionsByLastMessage(rows.map(mapDiscussion)));
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
   if (sectionId) {
     const rows = await prisma.discussion.findMany({
-      where: { sectionId },
+      where: { kind: "DISCUSSION", sectionId },
       include: { messages: true },
     });
     return json(sortDiscussionsByLastMessage(rows.map(mapDiscussion)));
@@ -38,11 +38,10 @@ export async function GET(req: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) return errorResponse("غير مصرّح", 403);
 
-  const where: Prisma.DiscussionWhereInput = {};
+  const where: Prisma.DiscussionWhereInput = { kind: "DISCUSSION" };
   if (status) where.status = status.toUpperCase() as "OPEN" | "RESOLVED";
   if (search) {
     where.OR = [
-      { selectedText: { contains: search, mode: "insensitive" } },
       { sectionTitle: { contains: search, mode: "insensitive" } },
       {
         messages: {
@@ -68,30 +67,8 @@ export async function POST(req: NextRequest) {
   const sectionId = String(body.sectionId ?? "");
   const sectionTitle = String(body.sectionTitle ?? "");
   const bookTitle = String(body.bookTitle ?? "");
-  const blockIndex = Number(body.blockIndex ?? 0);
-  const selectedText = String(body.selectedText ?? "").slice(0, 300);
-  const charStart = Number(body.charStart ?? 0);
-  const charEnd = Number(body.charEnd ?? 0);
 
   if (!sectionId) return errorResponse("معرّف القسم مطلوب");
-
-  if (body.kind === "highlight") {
-    const row = await prisma.discussion.create({
-      data: {
-        kind: "HIGHLIGHT",
-        sectionId,
-        sectionTitle,
-        bookTitle,
-        blockIndex,
-        selectedText,
-        charStart,
-        charEnd,
-        createdById: user.id,
-      },
-      include: { messages: true },
-    });
-    return json(mapDiscussion(row));
-  }
 
   const text = String(body.text ?? "").trim();
   if (!text) return errorResponse("النص مطلوب");
@@ -104,10 +81,10 @@ export async function POST(req: NextRequest) {
       sectionId,
       sectionTitle,
       bookTitle,
-      blockIndex,
-      selectedText,
-      charStart,
-      charEnd,
+      blockIndex: 0,
+      selectedText: "",
+      charStart: 0,
+      charEnd: 0,
       createdById: user.id,
       messages: {
         create: {

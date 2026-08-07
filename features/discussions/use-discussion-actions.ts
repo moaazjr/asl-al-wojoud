@@ -4,13 +4,29 @@ import * as React from "react";
 import { getCommentService } from "@/services/container";
 import { useAuth } from "@/features/auth/use-auth";
 import { useNotifications } from "@/features/notifications/use-notifications";
-import type { DiscussionActions } from "./types";
+import type { CommentMeta, DiscussionActions } from "./types";
 
 export function useDiscussionActions(
   reload: () => void,
 ): DiscussionActions {
   const { user } = useAuth();
   const { refresh: refreshNotifications } = useNotifications();
+
+  const createComment = React.useCallback(
+    async (
+      text: string,
+      meta?: CommentMeta,
+    ): Promise<import("@/interfaces/types").Discussion | null> => {
+      if (!user || !meta) return null;
+      const d = await getCommentService().createComment(
+        { ...meta, text },
+        user,
+      );
+      reload();
+      return d;
+    },
+    [user, reload],
+  );
 
   const addMessage = React.useCallback(
     async (discussionId: string, text: string, replyToMessageId?: string) => {
@@ -98,6 +114,7 @@ export function useDiscussionActions(
 
   return {
     user,
+    createComment,
     addMessage,
     toggleLike,
     editMessage,

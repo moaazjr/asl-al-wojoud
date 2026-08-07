@@ -53,7 +53,11 @@ export default async function ChapterPage({
         </h1>
       </header>
 
-      <SectionList sections={book.sections} bookNumber={bookNumber} />
+      <SectionList
+        sections={book.sections}
+        bookNumber={bookNumber}
+        anchor
+      />
 
       <div className="mt-10 flex justify-start">
         <Button asChild variant="outline">

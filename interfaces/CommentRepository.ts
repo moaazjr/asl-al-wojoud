@@ -1,24 +1,9 @@
 import type { Discussion, DiscussionFilter, Message } from "./types";
 
-export interface CreateHighlightInput {
-  sectionId: string;
-  sectionTitle: string;
-  bookTitle: string;
-  blockIndex: number;
-  selectedText: string;
-  charStart: number;
-  charEnd: number;
-  authorId: string;
-}
-
 export interface CreateDiscussionInput {
   sectionId: string;
   sectionTitle: string;
   bookTitle: string;
-  blockIndex: number;
-  selectedText: string;
-  charStart: number;
-  charEnd: number;
   authorId: string;
   authorName: string;
   authorRole: Message["authorRole"];
@@ -40,8 +25,6 @@ export interface CommentRepository {
   getDiscussionsForUser(userId: string): Promise<Discussion[]>;
   getAllDiscussions(filter?: DiscussionFilter): Promise<Discussion[]>;
   createDiscussion(input: CreateDiscussionInput): Promise<Discussion>;
-  createHighlight(input: CreateHighlightInput): Promise<Discussion>;
-  removeHighlight(id: string, userId: string): Promise<void>;
   addMessage(input: AddMessageInput): Promise<Message | null>;
   editMessage(
     discussionId: string,

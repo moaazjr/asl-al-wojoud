@@ -36,7 +36,7 @@ export function Overview() {
       <div>
         <h1 className="font-kufi text-2xl font-bold text-ink">نظرة عامة</h1>
         <p className="font-kufi text-sm text-ink-faint">
-          ملخّص نشاط النقاشات والمستخدمين
+          ملخّص نشاط التعليقات والمستخدمين
         </p>
       </div>
 
@@ -53,13 +53,13 @@ export function Overview() {
           icon={MessagesSquare}
         />
         <StatCard
-          label="نقاشات مفتوحة"
+          label="تعليقات مفتوحة"
           value={stats.openDiscussions}
           icon={CircleDot}
           tone="amber"
         />
         <StatCard
-          label="نقاشات مغلقة"
+          label="تعليقات مغلقة"
           value={stats.resolvedDiscussions}
           icon={CheckCircle2}
           tone="emerald"
@@ -84,7 +84,7 @@ export function Overview() {
                   {stats.mostCommentedChapter.bookTitle}
                 </p>
                 <p className="font-kufi text-xs text-ink-faint">
-                  {stats.mostCommentedChapter.count} نقاش
+                  {stats.mostCommentedChapter.count} تعليق
                 </p>
               </div>
             </div>

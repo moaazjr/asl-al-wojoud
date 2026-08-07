@@ -67,14 +67,9 @@ export function sortDiscussionsByLastMessage(
 export function mapDiscussion(d: DiscussionWithMessages): Discussion {
   return {
     id: d.id,
-    kind: d.kind === "HIGHLIGHT" ? "highlight" : "discussion",
     sectionId: d.sectionId,
     sectionTitle: d.sectionTitle,
     bookTitle: d.bookTitle,
-    blockIndex: d.blockIndex,
-    selectedText: d.selectedText,
-    charStart: d.charStart,
-    charEnd: d.charEnd,
     status: d.status === "RESOLVED" ? "resolved" : "open",
     resolvedAt: d.resolvedAt?.getTime(),
     resolvedById: d.resolvedById ?? undefined,

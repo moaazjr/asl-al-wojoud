@@ -22,9 +22,9 @@ import { Badge } from "@/components/ui/badge";
 
 const NAV = [
   { href: "/dashboard", label: "نظرة عامة", icon: LayoutDashboard },
-  { href: "/dashboard/discussions", label: "كل النقاشات", icon: MessagesSquare },
-  { href: "/dashboard/open", label: "النقاشات المفتوحة", icon: CircleDot },
-  { href: "/dashboard/resolved", label: "النقاشات المغلقة", icon: CheckCircle2 },
+  { href: "/dashboard/discussions", label: "كل التعليقات", icon: MessagesSquare },
+  { href: "/dashboard/open", label: "التعليقات المفتوحة", icon: CircleDot },
+  { href: "/dashboard/resolved", label: "التعليقات المغلقة", icon: CheckCircle2 },
   { href: "/dashboard/recent", label: "أحدث التعليقات", icon: Clock },
   { href: "/dashboard/users", label: "المستخدمون", icon: Users },
   { href: "/dashboard/settings", label: "الإعدادات", icon: Settings },

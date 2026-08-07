@@ -2,7 +2,6 @@ import type {
   AddMessageInput,
   CommentRepository,
   CreateDiscussionInput,
-  CreateHighlightInput,
 } from "@/interfaces/CommentRepository";
 import type {
   Discussion,
@@ -45,20 +44,6 @@ export class RestCommentRepository implements CommentRepository {
       method: "POST",
       body: JSON.stringify(input),
     });
-  }
-
-  async createHighlight(input: CreateHighlightInput): Promise<Discussion> {
-    return apiFetch<Discussion>("/api/discussions", {
-      method: "POST",
-      body: JSON.stringify({ ...input, kind: "highlight" }),
-    });
-  }
-
-  async removeHighlight(id: string, _userId: string): Promise<void> {
-    await apiFetch<{ ok: true }>(
-      `/api/discussions/${id}?mode=highlight`,
-      { method: "DELETE" },
-    );
   }
 
   async addMessage(input: AddMessageInput): Promise<Message | null> {

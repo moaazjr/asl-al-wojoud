@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getAllSectionSlugs, getToc } from "@/lib/content";
+import { getAllChapterSlugs, getToc } from "@/lib/content";
 import { siteConfig } from "@/data/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -18,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     });
   }
 
-  for (const { bookNumber, slug } of getAllSectionSlugs()) {
+  for (const { bookNumber, slug } of getAllChapterSlugs()) {
     routes.push({
       url: `${base}/${bookNumber}/${slug}`,
       lastModified: new Date(),

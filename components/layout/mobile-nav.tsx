@@ -21,7 +21,7 @@ export function MobileNav({ books }: { books: NavBook[] }) {
         <button
           type="button"
           aria-label="فتح قائمة التنقل"
-          className="-ms-2 inline-flex h-10 w-10 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-paper-deep hover:text-ink lg:hidden"
+          className="-ms-2 inline-flex h-10 w-10 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-paper-deep hover:text-ink"
         >
           <Menu className="h-5 w-5" />
         </button>

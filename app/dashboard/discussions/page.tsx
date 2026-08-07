@@ -4,7 +4,7 @@ import { PageHeader } from "../_components/page-header";
 export default function DiscussionsPage() {
   return (
     <div className="space-y-4">
-      <PageHeader title="كل النقاشات" desc="إدارة جميع نقاشات الكتاب" />
+      <PageHeader title="كل التعليقات" desc="إدارة جميع تعليقات الكتاب" />
       <DiscussionsManager />
     </div>
   );

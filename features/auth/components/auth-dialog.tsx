@@ -25,7 +25,7 @@ export function AuthDialog() {
         <DialogHeader className="items-center text-center">
           <DialogTitle className="font-amiri text-2xl">حسابك</DialogTitle>
           <DialogDescription>
-            سجّل الدخول للمشاركة في النقاشات والتعليقات
+            سجّل الدخول للمشاركة في التعليقات
           </DialogDescription>
         </DialogHeader>
         <div className="px-6 pb-6">

@@ -2,24 +2,16 @@
 
 import * as React from "react";
 import { Send, Loader2 } from "lucide-react";
-import type { Discussion } from "@/interfaces/types";
 import type { DiscussionActions } from "../types";
+import { useAuth } from "@/features/auth/use-auth";
 import { Avatar } from "@/components/ui/avatar";
 
-export function DiscussionComposer({
-  discussion,
-  api,
-}: {
-  discussion: Discussion;
-  api: DiscussionActions;
-}) {
+export function CommentComposer({ api }: { api: DiscussionActions }) {
+  const { requireAuth } = useAuth();
   const [text, setText] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const taRef = React.useRef<HTMLTextAreaElement>(null);
-
-  const isAdmin = api.user?.role === "admin";
-  const canPost = isAdmin;
 
   React.useEffect(() => {
     const el = taRef.current;
@@ -30,11 +22,15 @@ export function DiscussionComposer({
   }, [text]);
 
   async function submit() {
-    if (!text.trim()) return;
+    if (!requireAuth()) return;
+    if (!text.trim()) {
+      setError("اكتب تعليقك أولًا");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      await api.addMessage(discussion.id, text.trim());
+      await api.createComment(text.trim());
       setText("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر النشر");
@@ -45,21 +41,17 @@ export function DiscussionComposer({
 
   if (!api.user) {
     return (
-      <p className="py-1.5 text-center font-kufi text-xs text-ink-faint">
-        سجّل الدخول للمشاركة في النقاش
+      <p className="rounded-2xl border border-dashed border-line bg-paper-deep/40 py-3 text-center font-kufi text-xs text-ink-faint">
+        سجّل الدخول لإضافة تعليق على هذا المبحث
       </p>
     );
   }
 
-  if (!canPost) return null;
-
-  const placeholder = isAdmin ? "اكتب ردّك كمشرف…" : "اكتب تعليقك…";
-
   return (
-    <div className="flex items-start gap-2.5 pt-1">
+    <div className="flex items-start gap-2.5">
       <Avatar
         name={api.user.name}
-        isAdmin={isAdmin}
+        isAdmin={api.user.role === "admin"}
         className="h-9 w-9 shrink-0 text-sm"
       />
       <div className="min-w-0 flex-1">
@@ -68,7 +60,7 @@ export function DiscussionComposer({
             ref={taRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={placeholder}
+            placeholder="اكتب تعليقًا على هذا المبحث…"
             rows={1}
             maxLength={1000}
             onKeyDown={(e) => {
@@ -91,12 +83,12 @@ export function DiscussionComposer({
               ) : (
                 <Send className="h-3.5 w-3.5" />
               )}
-              {isAdmin ? "ردّ" : "نشر"}
+              نشر
             </button>
           )}
         </div>
         {error && (
-          <p className="mt-1 ps-1 font-kufi text-xs text-rose-600 dark:text-rose-400">
+          <p className="mt-1.5 ps-1 font-kufi text-xs text-rose-600 dark:text-rose-400">
             {error}
           </p>
         )}

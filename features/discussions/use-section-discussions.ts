@@ -6,13 +6,6 @@ import { getCommentService } from "@/services/container";
 import { useAuth } from "@/features/auth/use-auth";
 import { useNotifications } from "@/features/notifications/use-notifications";
 
-export interface SelectionInfo {
-  blockIndex: number;
-  selectedText: string;
-  charStart: number;
-  charEnd: number;
-}
-
 export function useSectionDiscussions(
   sectionId: string,
   meta: { sectionTitle: string; bookTitle: string },
@@ -51,23 +44,13 @@ export function useSectionDiscussions(
     [sectionId, meta.sectionTitle, meta.bookTitle],
   );
 
-  const createDiscussion = React.useCallback(
-    async (sel: SelectionInfo, text: string): Promise<Discussion | null> => {
+  const createComment = React.useCallback(
+    async (text: string): Promise<Discussion | null> => {
       if (!user) return null;
-      const d = await getCommentService().createDiscussion(
-        { ...base, ...sel, text },
+      const d = await getCommentService().createComment(
+        { ...base, text },
         user,
       );
-      reload();
-      return d;
-    },
-    [user, base, reload],
-  );
-
-  const createHighlight = React.useCallback(
-    async (sel: SelectionInfo): Promise<Discussion | null> => {
-      if (!user) return null;
-      const d = await getCommentService().createHighlight({ ...base, ...sel }, user);
       reload();
       return d;
     },
@@ -167,8 +150,7 @@ export function useSectionDiscussions(
     discussions,
     loading,
     reload,
-    createDiscussion,
-    createHighlight,
+    createComment,
     addMessage,
     toggleLike,
     editMessage,

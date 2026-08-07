@@ -9,25 +9,11 @@ import type {
 import { permissions } from "./permissions";
 import type { NotificationService } from "./NotificationService";
 
-export interface NewDiscussionInput {
+export interface NewCommentInput {
   sectionId: string;
   sectionTitle: string;
   bookTitle: string;
-  blockIndex: number;
-  selectedText: string;
-  charStart: number;
-  charEnd: number;
   text: string;
-}
-
-export interface NewHighlightInput {
-  sectionId: string;
-  sectionTitle: string;
-  bookTitle: string;
-  blockIndex: number;
-  selectedText: string;
-  charStart: number;
-  charEnd: number;
 }
 
 export class CommentService {
@@ -48,8 +34,8 @@ export class CommentService {
     return this.repo.getAllDiscussions(filter);
   }
 
-  async createDiscussion(
-    input: NewDiscussionInput,
+  async createComment(
+    input: NewCommentInput,
     user: User,
   ): Promise<Discussion> {
     const text = input.text.trim();
@@ -59,32 +45,11 @@ export class CommentService {
       sectionId: input.sectionId,
       sectionTitle: input.sectionTitle,
       bookTitle: input.bookTitle,
-      blockIndex: input.blockIndex,
-      selectedText: input.selectedText.slice(0, 300),
-      charStart: input.charStart,
-      charEnd: input.charEnd,
       authorId: user.id,
       authorName: user.name,
       authorRole: user.role,
       text,
     });
-  }
-
-  createHighlight(input: NewHighlightInput, user: User): Promise<Discussion> {
-    return this.repo.createHighlight({
-      sectionId: input.sectionId,
-      sectionTitle: input.sectionTitle,
-      bookTitle: input.bookTitle,
-      blockIndex: input.blockIndex,
-      selectedText: input.selectedText.slice(0, 300),
-      charStart: input.charStart,
-      charEnd: input.charEnd,
-      authorId: user.id,
-    });
-  }
-
-  removeHighlight(id: string, user: User): Promise<void> {
-    return this.repo.removeHighlight(id, user.id);
   }
 
   async addMessage(
@@ -98,7 +63,7 @@ export class CommentService {
     if (trimmed.length > 1000) throw new Error("النص طويل جدًا");
 
     const discussion = await this.repo.getDiscussion(discussionId);
-    if (!discussion) throw new Error("النقاش غير موجود");
+    if (!discussion) throw new Error("التعليق غير موجود");
 
     const isAdmin = user.role === "admin";
     if (!isAdmin) {
@@ -121,7 +86,7 @@ export class CommentService {
         discussionId: discussion.id,
         sectionId: discussion.sectionId,
         sectionTitle: discussion.sectionTitle,
-        text: `ردّ المشرف على نقاشك: «${discussion.selectedText.slice(0, 60)}»`,
+        text: `ردّ المشرف على تعليقك في «${discussion.sectionTitle}»`,
       });
     }
 
@@ -183,7 +148,7 @@ export class CommentService {
         discussionId: discussion.id,
         sectionId: discussion.sectionId,
         sectionTitle: discussion.sectionTitle,
-        text: `تمّ إغلاق نقاشك: «${discussion.selectedText.slice(0, 60)}»`,
+        text: `تمّ إغلاق تعليقك في «${discussion.sectionTitle}»`,
       });
     }
   }
@@ -200,7 +165,7 @@ export class CommentService {
         discussionId: discussion.id,
         sectionId: discussion.sectionId,
         sectionTitle: discussion.sectionTitle,
-        text: `أُعيد فتح نقاشك: «${discussion.selectedText.slice(0, 60)}»`,
+        text: `أُعيد فتح تعليقك في «${discussion.sectionTitle}»`,
       });
     }
   }
@@ -220,7 +185,7 @@ export class CommentService {
     if (!discussion) return;
     const allowed =
       user.role === "admin" || discussion.createdById === user.id;
-    if (!allowed) throw new Error("غير مصرّح بحذف هذا النقاش");
+    if (!allowed) throw new Error("غير مصرّح بحذف هذا التعليق");
     await this.repo.deleteDiscussion(discussionId);
   }
 

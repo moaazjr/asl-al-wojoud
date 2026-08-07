@@ -36,14 +36,9 @@ export interface Message {
 
 export interface Discussion {
   id: string;
-  kind: "highlight" | "discussion";
   sectionId: string;
   sectionTitle: string;
   bookTitle: string;
-  blockIndex: number;
-  selectedText: string;
-  charStart: number;
-  charEnd: number;
   status: DiscussionStatus;
   resolvedAt?: number;
   resolvedById?: string;

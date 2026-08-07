@@ -55,21 +55,19 @@ export function MyDiscussions() {
         </span>
         <h1 className="font-kufi text-xl font-bold text-ink">سجّل الدخول</h1>
         <p className="font-kufi text-sm text-ink-faint">
-          لعرض نقاشاتك ومتابعة ردود المشرفين
+          لعرض تعليقاتك ومتابعة ردود المشرفين
         </p>
         <Button onClick={() => setAuthDialogOpen(true)}>تسجيل الدخول</Button>
       </div>
     );
   }
 
-  const threads = discussions.filter((d) => d.kind === "discussion");
-
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
       <div className="mb-6">
-        <h1 className="font-kufi text-2xl font-bold text-ink">نقاشاتي</h1>
+        <h1 className="font-kufi text-2xl font-bold text-ink">تعليقاتي</h1>
         <p className="font-kufi text-sm text-ink-faint">
-          نقاشاتك وردود المشرفين عليها
+          تعليقاتك وردود المشرفين عليها
         </p>
       </div>
 
@@ -77,11 +75,11 @@ export function MyDiscussions() {
         <div className="flex justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-accent" />
         </div>
-      ) : threads.length === 0 ? (
+      ) : discussions.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line py-16 text-center">
           <Inbox className="h-6 w-6 text-ink-faint" />
           <p className="font-kufi text-sm text-ink-faint">
-            لم تنشئ أي نقاش بعد
+            لم تكتب أي تعليق بعد
           </p>
           <Link
             href="/"
@@ -92,7 +90,7 @@ export function MyDiscussions() {
         </div>
       ) : (
         <div className="space-y-4">
-          {threads.map((d) => (
+          {discussions.map((d) => (
             <DiscussionThread
               key={d.id}
               discussion={d}

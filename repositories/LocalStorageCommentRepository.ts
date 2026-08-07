@@ -2,13 +2,13 @@ import type {
   AddMessageInput,
   CommentRepository,
   CreateDiscussionInput,
-  CreateHighlightInput,
 } from "@/interfaces/CommentRepository";
 import type { Discussion, DiscussionFilter, Message } from "@/interfaces/types";
 import { readJSON, STORAGE_KEYS, uid, writeJSON } from "./storage";
 
 async function load(): Promise<Discussion[]> {
-  return readJSON<Discussion[]>(STORAGE_KEYS.discussions, []);
+  const all = readJSON<Discussion[]>(STORAGE_KEYS.discussions, []);
+  return all.filter((d) => (d as { kind?: string }).kind !== "highlight" && d.messages.length > 0);
 }
 
 async function save(discussions: Discussion[]): Promise<void> {
@@ -34,7 +34,6 @@ function applyFilter(
     const q = filter.search.trim().toLowerCase();
     out = out.filter(
       (d) =>
-        d.selectedText.toLowerCase().includes(q) ||
         d.sectionTitle.toLowerCase().includes(q) ||
         d.messages.some(
           (m) =>
@@ -84,14 +83,9 @@ export class LocalStorageCommentRepository implements CommentRepository {
     };
     const discussion: Discussion = {
       id: uid(),
-      kind: "discussion",
       sectionId: input.sectionId,
       sectionTitle: input.sectionTitle,
       bookTitle: input.bookTitle,
-      blockIndex: input.blockIndex,
-      selectedText: input.selectedText,
-      charStart: input.charStart,
-      charEnd: input.charEnd,
       status: "open",
       createdAt: now,
       createdById: input.authorId,
@@ -102,36 +96,6 @@ export class LocalStorageCommentRepository implements CommentRepository {
     all.push(discussion);
     await save(all);
     return discussion;
-  }
-
-  async createHighlight(input: CreateHighlightInput): Promise<Discussion> {
-    const all = await load();
-    const discussion: Discussion = {
-      id: uid(),
-      kind: "highlight",
-      sectionId: input.sectionId,
-      sectionTitle: input.sectionTitle,
-      bookTitle: input.bookTitle,
-      blockIndex: input.blockIndex,
-      selectedText: input.selectedText.slice(0, 300),
-      charStart: input.charStart,
-      charEnd: input.charEnd,
-      status: "open",
-      createdAt: Date.now(),
-      createdById: input.authorId,
-      messages: [],
-    };
-    all.push(discussion);
-    await save(all);
-    return discussion;
-  }
-
-  async removeHighlight(id: string, userId: string): Promise<void> {
-    const all = await load();
-    const item = all.find((d) => d.id === id);
-    if (item && item.kind === "highlight" && item.createdById === userId) {
-      await save(all.filter((d) => d.id !== id));
-    }
   }
 
   async addMessage(input: AddMessageInput): Promise<Message | null> {

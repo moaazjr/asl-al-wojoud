@@ -16,7 +16,7 @@ export function RecentComments() {
           أحدث التعليقات
         </h1>
         <p className="font-kufi text-sm text-ink-faint">
-          آخر الرسائل عبر كل النقاشات
+          آخر الرسائل عبر كل التعليقات
         </p>
       </div>
 

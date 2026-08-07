@@ -12,10 +12,8 @@ import {
 import type { Discussion, Role } from "@/interfaces/types";
 import type { DiscussionActions } from "../types";
 import { sortByPinnedThenDate } from "../use-section-discussions";
-import { permissions } from "@/services/permissions";
 import { Button } from "@/components/ui/button";
 import { MessageItem } from "./message-item";
-import { DiscussionComposer } from "./discussion-composer";
 
 export function DiscussionThread({
   discussion,
@@ -33,14 +31,13 @@ export function DiscussionThread({
   const canManage = isAdmin || isOwner;
   const canResolveAction = isAdmin && discussion.status === "open";
   const canReopenAction = isAdmin && discussion.status === "resolved";
-  const showComposer = discussion.status === "open";
   const isResolved = discussion.status === "resolved";
 
   const allMessages = sortByPinnedThenDate(discussion.messages);
   const topLevel = allMessages.filter((m) => !m.parentMessageId);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-line-soft bg-paper shadow-soft">
+    <article className="overflow-hidden rounded-2xl border border-line bg-paper shadow-soft dark:bg-paper/80 dark:shadow-none">
       <div className="flex items-center gap-2 px-4 pt-3">
         {isResolved ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 font-kufi text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400">
@@ -60,11 +57,11 @@ export function DiscussionThread({
           </span>
         )}
         <span className="ms-auto font-kufi text-[0.7rem] text-ink-faint">
-          {discussion.messages.length} تعليق
+          {discussion.messages.length} رسالة
         </span>
       </div>
 
-      <div className="space-y-3 px-4 pb-2 pt-1">
+      <div className="space-y-3 px-4 pb-3 pt-1">
         {topLevel.length > 0 &&
           topLevel.map((m) => {
             const replyList = allMessages.filter(
@@ -84,22 +81,18 @@ export function DiscussionThread({
           })}
       </div>
 
-      <div className="px-4 pb-3">
-        {showComposer ? (
-          <DiscussionComposer discussion={discussion} api={api} />
-        ) : (
-          <div className="flex items-center justify-center gap-1.5 py-1.5">
-            <Lock className="h-3 w-3 text-ink-faint" />
-            <span className="font-kufi text-[0.7rem] text-ink-faint">
-              هذا النقاش مُغلَق
-            </span>
-          </div>
-        )}
-      </div>
+      {isResolved && (
+        <div className="flex items-center justify-center gap-1.5 px-4 pb-3">
+          <Lock className="h-3 w-3 text-ink-faint" />
+          <span className="font-kufi text-[0.7rem] text-ink-faint">
+            هذا التعليق مُغلق ولا يمكن الردّ عليه
+          </span>
+        </div>
+      )}
 
       {canManage && (
         <div className="flex items-center gap-2 border-t border-line-soft px-4 py-2">
-          {canResolveAction && permissions.canResolve(role!) && (
+          {canResolveAction && (
             <Button
               size="sm"
               variant="ghost"
@@ -110,7 +103,7 @@ export function DiscussionThread({
               إغلاق
             </Button>
           )}
-          {canReopenAction && permissions.canReopen(role!) && (
+          {canReopenAction && (
             <Button
               size="sm"
               variant="ghost"
@@ -125,7 +118,7 @@ export function DiscussionThread({
             variant="ghost"
             className="ms-auto text-rose-600 dark:text-rose-400"
             onClick={() => {
-              if (confirm("هل تريد حذف هذا النقاش بالكامل؟"))
+              if (confirm("هل تريد حذف هذا التعليق والردود المرافقة؟"))
                 void api.deleteDiscussion(discussion.id);
             }}
           >

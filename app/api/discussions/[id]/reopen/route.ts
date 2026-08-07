@@ -37,7 +37,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
         discussionId: discussion.id,
         sectionId: discussion.sectionId,
         sectionTitle: discussion.sectionTitle,
-        text: `أُعيد فتح نقاشك: «${discussion.selectedText.slice(0, 60)}»`,
+        text: `أُعيد فتح تعليقك في «${discussion.sectionTitle}»`,
       },
     });
   }

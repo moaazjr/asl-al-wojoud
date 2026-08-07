@@ -1,18 +1,17 @@
 import { Sidebar } from "@/components/layout/sidebar";
+import { BabShell } from "@/components/layout/bab-shell";
+import { getNavOutline, getNavTree } from "@/lib/content";
 
-export default function BabLayout({
+export default async function BabLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const books = getNavTree();
+  const outline = getNavOutline();
   return (
-    <div className="mx-auto flex w-full max-w-[1400px] flex-1">
-      <Sidebar />
-      <main className="min-w-0 flex-1">
-        <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-8 lg:py-12">
-          {children}
-        </div>
-      </main>
-    </div>
+    <BabShell sidebar={<Sidebar books={books} />} outline={outline}>
+      {children}
+    </BabShell>
   );
 }

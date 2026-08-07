@@ -169,3 +169,189 @@ export function flattenNav(nodes: NavNode[]): NavNode[] {
   }
   return out;
 }
+
+export interface OutlineNode {
+  num: string;
+  slug: string;
+  title: string;
+  level: number;
+  children: OutlineNode[];
+}
+
+export interface OutlineBook {
+  number: number;
+  titleOnly: string;
+  children: OutlineNode[];
+}
+
+function toOutlineNode(s: TocSection): OutlineNode {
+  return {
+    num: s.num,
+    slug: s.slug,
+    title: s.title,
+    level: s.level,
+    children: s.children.map(toOutlineNode),
+  };
+}
+
+let _navOutline: OutlineBook[] | null = null;
+export function getNavOutline(): OutlineBook[] {
+  if (_navOutline) return _navOutline;
+  _navOutline = getToc().map((b) => ({
+    number: b.number,
+    titleOnly: b.titleOnly,
+    children: b.sections.map(toOutlineNode),
+  }));
+  return _navOutline;
+}
+
+export interface ChapterSection {
+  num: string;
+  slug: string;
+  title: string;
+  desc?: string;
+  level: number;
+  bookNumber: number;
+  blocks: ContentBlock[];
+  children: ChapterSection[];
+}
+
+export interface Chapter {
+  num: string;
+  slug: string;
+  title: string;
+  desc?: string;
+  level: number;
+  bookNumber: number;
+  bookTitle: string;
+  bookTitleOnly: string;
+  titleArabic: string;
+  sections: ChapterSection[];
+  wordCount: number;
+  readingTime: number;
+}
+
+export interface FlatChapter {
+  num: string;
+  slug: string;
+  title: string;
+  bookNumber: number;
+  bookTitle: string;
+}
+
+function toChapterSection(
+  node: TocSection,
+  flatMap: Map<string, RawSection>,
+): ChapterSection {
+  const flat = flatMap.get(node.num);
+  return {
+    num: node.num,
+    slug: node.slug,
+    title: node.title,
+    desc: node.desc,
+    level: node.level,
+    bookNumber: node.bookNumber,
+    blocks: flat?.blocks ?? [],
+    children: node.children.map((c) => toChapterSection(c, flatMap)),
+  };
+}
+
+export function getChapters(bookNumber: number): Chapter[] {
+  const book = getBook(bookNumber);
+  if (!book) return [];
+  const sections = getBookSections(bookNumber);
+  const flatMap = new Map(sections.map((s) => [s.num, s as RawSection]));
+  return book.sections.map((node) => toChapter(node, book, flatMap));
+}
+
+function toChapter(
+  node: TocSection,
+  book: Book,
+  flatMap: Map<string, RawSection>,
+): Chapter {
+  const root = toChapterSection(node, flatMap);
+  const words = countChapterWords(root);
+  const minutes = Math.max(1, Math.round(words / 180));
+  return {
+    num: root.num,
+    slug: root.slug,
+    title: root.title,
+    desc: root.desc,
+    level: root.level,
+    bookNumber: root.bookNumber,
+    bookTitle: book.title,
+    bookTitleOnly: book.titleOnly,
+    titleArabic: book.titleArabic,
+    sections: root.children,
+    wordCount: words,
+    readingTime: minutes,
+  };
+}
+
+function countChapterWords(node: ChapterSection): number {
+  let n = node.blocks.reduce(
+    (sum, b) =>
+      sum +
+      (b.items
+        ? b.items.reduce((a, it) => a + it.trim().split(/\s+/).length, 0)
+        : b.text.trim().split(/\s+/).length),
+    0,
+  );
+  for (const c of node.children) n += countChapterWords(c);
+  return n;
+}
+
+const _chapterCache = new Map<number, Chapter[]>();
+export function getChapterList(bookNumber: number): Chapter[] {
+  if (_chapterCache.has(bookNumber)) return _chapterCache.get(bookNumber)!;
+  const chapters = getChapters(bookNumber);
+  _chapterCache.set(bookNumber, chapters);
+  return chapters;
+}
+
+export function getChapter(
+  bookNumber: number,
+  slug: string,
+): Chapter | undefined {
+  return getChapterList(bookNumber).find((c) => c.slug === slug);
+}
+
+export function getAllChapterSlugs(): { bookNumber: number; slug: string }[] {
+  return getToc().flatMap((b) =>
+    getChapterList(b.number).map((c) => ({
+      bookNumber: c.bookNumber,
+      slug: c.slug,
+    })),
+  );
+}
+
+let _flatChapters: FlatChapter[] | null = null;
+function getFlatChapters(): FlatChapter[] {
+  if (_flatChapters) return _flatChapters;
+  const out: FlatChapter[] = [];
+  for (const book of getToc()) {
+    for (const c of getChapterList(book.number)) {
+      out.push({
+        num: c.num,
+        slug: c.slug,
+        title: c.title,
+        bookNumber: c.bookNumber,
+        bookTitle: c.bookTitle,
+      });
+    }
+  }
+  _flatChapters = out;
+  return out;
+}
+
+export function getAdjacentChapters(
+  bookNumber: number,
+  slug: string,
+): { prev?: FlatChapter; next?: FlatChapter } {
+  const flat = getFlatChapters();
+  const i = flat.findIndex(
+    (c) => c.bookNumber === bookNumber && c.slug === slug,
+  );
+  if (i === -1) return {};
+  return { prev: flat[i - 1], next: flat[i + 1] };
+}
