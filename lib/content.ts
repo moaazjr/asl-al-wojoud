@@ -226,6 +226,7 @@ export interface Chapter {
   bookTitle: string;
   bookTitleOnly: string;
   titleArabic: string;
+  blocks: ContentBlock[];
   sections: ChapterSection[];
   wordCount: number;
   readingTime: number;
@@ -282,6 +283,7 @@ function toChapter(
     bookTitle: book.title,
     bookTitleOnly: book.titleOnly,
     titleArabic: book.titleArabic,
+    blocks: root.blocks,
     sections: root.children,
     wordCount: words,
     readingTime: minutes,

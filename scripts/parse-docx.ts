@@ -9,40 +9,14 @@ const PUBLIC_DIR = resolve(ROOT, "public");
 
 const DOCX_PATH = resolve(
   SOURCE_DIR,
-  "بسم الله الرحمن الرحيم. ملف أصل الوجود 09-07-2026.docx",
+  "أصل الوجود — النسخة المحسنة.docx",
 );
-const HTML_PATH = resolve(SOURCE_DIR, "asl-alwujud-site.html");
 const BOOK_COUNT = 7;
 
-type RawEntry = { num: string; title: string; desc?: string };
-type RawBook = { n: number; title: string; entries: RawEntry[] };
-
-function extractBooksJson(html: string): RawBook[] {
-  const start = html.indexOf("const BOOKS = ");
-  if (start === -1) throw new Error("BOOKS marker not found in HTML");
-  const bracketStart = html.indexOf("[", start);
-  let depth = 0;
-  let inStr = false;
-  let esc = false;
-  let end = bracketStart;
-  for (let i = bracketStart; i < html.length; i++) {
-    const c = html[i];
-    if (inStr) {
-      if (esc) esc = false;
-      else if (c === "\\") esc = true;
-      else if (c === '"') inStr = false;
-    } else if (c === '"') inStr = true;
-    else if (c === "[") depth++;
-    else if (c === "]") {
-      depth--;
-      if (depth === 0) {
-        end = i;
-        break;
-      }
-    }
-  }
-  return JSON.parse(html.slice(bracketStart, end + 1));
-}
+const BOOK_ORDINALS: Record<string, number> = {
+  "الأول": 1, "الثاني": 2, "الثالث": 3,
+  "الرابع": 4, "الخامس": 5, "السادس": 6, "السابع": 7,
+};
 
 interface Para {
   text: string;
@@ -78,7 +52,7 @@ function parseParagraphs(xml: string): Para[] {
     .filter((p) => p.text.length > 0);
 }
 
-const numRe = /^(\d+(?:\.\d+)+)(?:\s*[-–—:])?\s*(.*)$/;
+const numRe = /^(\d+(?:\.\d+)+)(?:\s*[-–—:\sـ])*\s*(.*)$/;
 const citationRe = /\[\s*([^\[\]:]+?)\s*:\s*([^\[\]]+?)\s*\]/;
 
 function countWords(blocks: { text: string; items?: string[] }[]): number {
@@ -159,81 +133,236 @@ function buildTree(nodes: TocNode[]): TocNode[] {
   return roots;
 }
 
+function isBookTitleLine(text: string): boolean {
+  return /^الباب\s+(الأول|الثاني|الثالث|الرابع|الخامس|السادس|السابع)$/.test(text.trim());
+}
+
+function getBookNumberFromTitle(text: string): number | null {
+  for (const [ordinal, num] of Object.entries(BOOK_ORDINALS)) {
+    if (text.includes(ordinal)) return num;
+  }
+  return null;
+}
+
 function main() {
   mkdirSync(OUT_DIR, { recursive: true });
 
-  const html = readFileSync(HTML_PATH, "utf8");
-  const booksRaw = extractBooksJson(html);
-  const bookTitles = new Map<number, string>();
-  for (const b of booksRaw) bookTitles.set(b.n, b.title);
-  const tocEntryMap = new Map<string, RawEntry>();
-  for (const b of booksRaw) for (const e of b.entries) tocEntryMap.set(e.num, e);
-
   const zip = new AdmZip(DOCX_PATH);
   const xml = zip.readAsText("word/document.xml", "utf8");
-  const paras = parseParagraphs(xml);
-  console.log(`Parsed ${paras.length} non-empty paragraphs`);
+  const allParas = parseParagraphs(xml);
+  console.log(`Parsed ${allParas.length} non-empty paragraphs from DOCX`);
 
-  const headings: { num: string; docxTitle: string; index: number }[] = [];
+  let lastTocIdx = 0;
+  for (let i = 0; i < allParas.length; i++) {
+    if (allParas[i].text.includes("\t") && /^\d+\.\d+/.test(allParas[i].text))
+      lastTocIdx = i;
+  }
+  console.log(`TOC section ends at paragraph index ${lastTocIdx}`);
+
+  const contentParas = allParas.slice(lastTocIdx + 1);
+
+  let contentEndIdx = contentParas.length;
+  for (let i = contentParas.length - 1; i >= 0; i--) {
+    const t = contentParas[i].text.trim();
+    if (t === "خاتمة الكتاب" && !t.includes("\t")) {
+      contentEndIdx = i + 1;
+      break;
+    }
+  }
+  const paras = contentParas.slice(0, contentEndIdx);
+  console.log(`Content paragraphs: ${paras.length}`);
+
+  const bookTitleMap = new Map<number, string>();
+  for (let i = 0; i < paras.length; i++) {
+    const t = paras[i].text.trim();
+    if (isBookTitleLine(t)) {
+      const bn = getBookNumberFromTitle(t);
+      if (bn && !bookTitleMap.has(bn)) {
+        let fullTitle = t;
+        if (i + 1 < paras.length) {
+          const nextText = paras[i + 1].text.trim();
+          if (
+            nextText &&
+            !numRe.test(nextText) &&
+            !isBookTitleLine(nextText) &&
+            !/^(بين يدي|خاتمة|بسم الله)/.test(nextText)
+          ) {
+            fullTitle = t + ": " + nextText;
+          }
+        }
+        bookTitleMap.set(bn, fullTitle);
+        console.log(`Book ${bn} title: ${fullTitle}`);
+      }
+    }
+  }
+
+  for (let bn = 1; bn <= BOOK_COUNT; bn++) {
+    if (!bookTitleMap.has(bn)) {
+      console.log(`WARNING: Book ${bn} title not found, using fallback`);
+      bookTitleMap.set(bn, `الباب ${bn}`);
+    }
+  }
+
+  const headingByIndex = new Map<number, { num: string; title: string }>();
   const seenHeading = new Set<string>();
-  paras.forEach((p, i) => {
-    if (!p.headingStyle) return;
-    const m = p.text.match(numRe);
-    if (!m) return;
-    const bookNumber = parseInt(m[1].split(".")[0], 10);
-    if (bookNumber < 1 || bookNumber > BOOK_COUNT) return;
-    if (seenHeading.has(m[1])) return;
-    seenHeading.add(m[1]);
-    headings.push({ num: m[1], docxTitle: m[2].trim(), index: i });
-  });
-  console.log(
-    `Distinct headings in DOCX (books 1-${BOOK_COUNT}): ${headings.length}`,
-  );
 
-  const headingByIndex = new Map<number, string>();
-  for (const h of headings) headingByIndex.set(h.index, h.num);
+  const specialSections: {
+    idx: number;
+    num: string;
+    title: string;
+    bookNumber: number;
+  }[] = [];
 
+  let currentBookNum = 0;
+
+  for (let i = 0; i < paras.length; i++) {
+    const t = paras[i].text.trim();
+
+    if (isBookTitleLine(t)) {
+      const bn = getBookNumberFromTitle(t);
+      if (bn) currentBookNum = bn;
+      continue;
+    }
+
+    if (/^بسم الله الرحمن الرحيم$/.test(t)) continue;
+
+    if (/^التعريف بالنشر$/.test(t)) break;
+
+    const khatamaMatch = t.match(/^خاتمة\s+الباب\s+(الأول|الثاني|الثالث|الرابع|الخامس|السادس|السابع)$/);
+    if (khatamaMatch) {
+      const bn = getBookNumberFromTitle(t);
+      if (bn) {
+        const kNum = `${bn}.z`;
+        if (!seenHeading.has(kNum)) {
+          seenHeading.add(kNum);
+          specialSections.push({ idx: i, num: kNum, title: t, bookNumber: bn });
+          headingByIndex.set(i, { num: kNum, title: t });
+        }
+      }
+      continue;
+    }
+
+    const baynaMatch = t.match(/^بين يدي الباب\s+(الأول|الثاني|الثالث|الرابع|الخامس|السادس|السابع)$/);
+    if (baynaMatch) {
+      const bn = getBookNumberFromTitle(t);
+      if (bn) {
+        const introNum = `${bn}.0`;
+        if (!seenHeading.has(introNum)) {
+          seenHeading.add(introNum);
+          specialSections.push({
+            idx: i,
+            num: introNum,
+            title: t,
+            bookNumber: bn,
+          });
+          headingByIndex.set(i, { num: introNum, title: t });
+        }
+      }
+      continue;
+    }
+
+    if (/^مقد[ّ]?مة الكتاب$/.test(t) && currentBookNum === 0) {
+      if (!seenHeading.has("pre.0")) {
+        seenHeading.add("pre.0");
+        specialSections.push({
+          idx: i,
+          num: "pre.0",
+          title: t,
+          bookNumber: 0,
+        });
+        headingByIndex.set(i, { num: "pre.0", title: t });
+        currentBookNum = 0;
+      }
+      continue;
+    }
+
+    if (/^"تنويه"$/.test(t) || t === "تنويه") {
+      if (!seenHeading.has("pre.1")) {
+        seenHeading.add("pre.1");
+        specialSections.push({ idx: i, num: "pre.1", title: t, bookNumber: 0 });
+        headingByIndex.set(i, { num: "pre.1", title: t });
+      }
+      continue;
+    }
+
+    const m = t.match(numRe);
+    if (m) {
+      const num = m[1];
+      const title = m[2].trim();
+      const bookNumber = parseInt(num.split(".")[0], 10);
+      if (bookNumber < 1 || bookNumber > BOOK_COUNT) continue;
+      if (currentBookNum > 0 && bookNumber !== currentBookNum) continue;
+      if (seenHeading.has(num)) continue;
+      seenHeading.add(num);
+      if (bookNumber > currentBookNum) currentBookNum = bookNumber;
+      headingByIndex.set(i, { num, title });
+    }
+  }
+
+  const headings = [...headingByIndex.entries()].map(([idx, h]) => ({
+    num: h.num,
+    docxTitle: h.title,
+    index: idx,
+  }));
+
+  console.log(`Total headings found: ${headings.length}`);
+
+  const headingIndices = new Set(headingByIndex.keys());
   const contentByNum = new Map<string, Para[]>();
   let currentNum: string | null = null;
-  paras.forEach((p, i) => {
-    if (headingByIndex.has(i)) {
-      currentNum = headingByIndex.get(i)!;
+
+  for (let i = 0; i < paras.length; i++) {
+    if (headingIndices.has(i)) {
+      const h = headingByIndex.get(i)!;
+      currentNum = h.num;
       if (!contentByNum.has(currentNum)) contentByNum.set(currentNum, []);
-      return;
+      continue;
     }
-    if (currentNum) contentByNum.get(currentNum)!.push(p);
-  });
+    if (currentNum) contentByNum.get(currentNum)!.push(paras[i]);
+  }
 
   const allNodes: TocNode[] = headings.map((h) => {
-    const toc = tocEntryMap.get(h.num);
-    const title = toc?.title ?? h.docxTitle;
-    const level = h.num.split(".").length;
+    const level = h.num === "pre.0" || h.num === "pre.1"
+      ? 2
+      : h.num.endsWith(".z") || h.num.endsWith(".0")
+        ? 2
+        : h.num.split(".").length;
+    const bookNumber = h.num.startsWith("pre.")
+      ? 0
+      : parseInt(h.num.split(".")[0], 10);
     return {
       num: h.num,
       slug: h.num.replace(/\./g, "-"),
-      title,
-      desc: toc?.desc,
+      title: h.docxTitle,
       level,
-      bookNumber: parseInt(h.num.split(".")[0], 10),
+      bookNumber,
       children: [],
     };
   });
 
+  const preNodes = allNodes.filter((n) => n.bookNumber === 0);
   const booksOut = [];
-  for (let n = 1; n <= BOOK_COUNT; n++) {
-    const fullTitle = bookTitles.get(n) ?? `الباب ${n}`;
-    const titleOnly = fullTitle.replace(/^الباب\s+[^:]+:\s*/, "");
-    const nodes = allNodes.filter((x) => x.bookNumber === n);
+  for (let n = 0; n <= BOOK_COUNT; n++) {
+    const fullTitle =
+      n === 0
+        ? "المقدمة والمقدّمات"
+        : bookTitleMap.get(n)!;
+    const titleOnly =
+      n === 0
+        ? "المقدمة والمقدّمات"
+        : fullTitle.replace(/^الباب\s+[^:]+:\s*/, "");
+    const nodes = n === 0 ? preNodes : allNodes.filter((x) => x.bookNumber === n);
     booksOut.push({
       number: n,
       slug: String(n),
       title: fullTitle,
       titleOnly,
-      titleArabic: arabicBookDigits[n],
+      titleArabic: n === 0 ? "" : arabicBookDigits[n],
       sections: buildTree(nodes),
       sectionCount: nodes.length,
     });
   }
+
   writeFileSync(
     resolve(OUT_DIR, "toc.json"),
     JSON.stringify(booksOut, null, 2),
@@ -253,7 +382,7 @@ function main() {
     readingTime: number;
   }[] = [];
 
-  for (let n = 1; n <= BOOK_COUNT; n++) {
+  for (let n = 0; n <= BOOK_COUNT; n++) {
     const nodes = allNodes.filter((x) => x.bookNumber === n);
     const sectionsOut = nodes.map((node) => {
       const body = contentByNum.get(node.num) ?? [];
@@ -275,7 +404,7 @@ function main() {
         desc: s.desc,
         level: s.level,
         bookNumber: s.bookNumber,
-        bookTitle: booksOut[n - 1].title,
+        bookTitle: booksOut[n].title,
         wordCount: s.wordCount,
         readingTime: s.readingTime,
       });
@@ -294,9 +423,18 @@ function main() {
     "utf8",
   );
 
-  const searchDocs: { i: number; s: string; bn: number; bt: string; n: string; t: string; d: string; c: string }[] = [];
+  const searchDocs: {
+    i: number;
+    s: string;
+    bn: number;
+    bt: string;
+    n: string;
+    t: string;
+    d: string;
+    c: string;
+  }[] = [];
   let searchIdx = 0;
-  for (let n = 1; n <= BOOK_COUNT; n++) {
+  for (let n = 0; n <= BOOK_COUNT; n++) {
     const nodes = allNodes.filter((x) => x.bookNumber === n);
     for (const node of nodes) {
       const body = contentByNum.get(node.num) ?? [];
@@ -308,7 +446,7 @@ function main() {
         i: searchIdx++,
         s: node.slug,
         bn: node.bookNumber,
-        bt: booksOut[n - 1].title,
+        bt: booksOut[n].title,
         n: node.num,
         t: node.title,
         d: node.desc ?? "",

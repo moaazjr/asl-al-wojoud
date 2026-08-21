@@ -6,6 +6,7 @@ import { PrevNextNav } from "@/components/content/prev-next-nav";
 import { CopyLinkButton } from "@/components/content/copy-link-button";
 import { ReadingProgress } from "@/components/layout/reading-progress";
 import { ChapterContent } from "@/components/content/chapter-content";
+import { ContentRenderer } from "@/components/content/content-renderer";
 import { SectionComments } from "@/features/discussions/components/section-comments";
 import { getAdjacentChapters, getAllChapterSlugs, getBook, getChapter } from "@/lib/content";
 
@@ -93,6 +94,11 @@ export default async function ChapterPage({
         </div>
       </header>
 
+      {chapterData.blocks.length > 0 && (
+        <div className="mt-6">
+          <ContentRenderer blocks={chapterData.blocks} />
+        </div>
+      )}
       <ChapterContent sections={chapterData.sections} />
 
       <SectionComments
