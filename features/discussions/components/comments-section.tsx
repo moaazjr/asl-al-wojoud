@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Inbox, MessageSquareText } from "lucide-react";
+import { Loader2, Inbox, MessageSquareText, Lock, Ban } from "lucide-react";
 import type { Discussion, DiscussionStatus, Role } from "@/interfaces/types";
 import type { SectionDiscussionsApi } from "../use-section-discussions";
 import { DiscussionThread } from "./discussion-thread";
@@ -16,9 +16,13 @@ export function CommentsSection({
 }: {
   api: SectionDiscussionsApi;
 }) {
-  const { discussions, loading, user } = api;
+  const { discussions, loading, user, settings, sectionId } = api;
   const [filter, setFilter] = React.useState<FilterKey>("all");
   const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
+
+  const commentsEnabled = settings?.commentsEnabled ?? true;
+  const sectionLocked = settings?.lockedSections.includes(sectionId) ?? false;
+  const isDisabled = !commentsEnabled || sectionLocked;
 
   function changeFilter(next: FilterKey) {
     setFilter(next);
@@ -60,8 +64,32 @@ export function CommentsSection({
       </div>
 
       <div className="mb-4">
-        <CommentComposer api={api} />
+        <CommentComposer api={api} sectionId={sectionId} />
       </div>
+
+      {isDisabled && (
+        <div className={`mb-4 flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-center ${
+          !commentsEnabled
+            ? "border border-rose-300/50 bg-rose-500/5 dark:border-rose-400/30 dark:bg-rose-400/5"
+            : "border border-amber-300/50 bg-amber-500/5 dark:border-amber-400/30 dark:bg-amber-400/5"
+        }`}>
+          {!commentsEnabled ? (
+            <>
+              <Ban className="h-4 w-4 shrink-0 text-rose-500 dark:text-rose-400" />
+              <p className="font-kufi text-xs text-rose-600 dark:text-rose-400">
+                التعليقات معطّلة من قبل المشرف
+              </p>
+            </>
+          ) : (
+            <>
+              <Lock className="h-4 w-4 shrink-0 text-amber-500 dark:text-amber-400" />
+              <p className="font-kufi text-xs text-amber-600 dark:text-amber-400">
+                هذا المبحث مقفل — لا يمكن إضافة تعليقات جديدة أو الردّ
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {counts.all > 1 && (
         <div className="mb-4 flex items-center gap-1 border-b border-line-soft pb-px">

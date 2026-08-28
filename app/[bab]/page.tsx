@@ -22,6 +22,7 @@ export async function generateMetadata({
   return {
     title: book.titleOnly,
     description: `بابٌ من ${book.title} يضمّ ${book.sectionCount} مبحثاً.`,
+    alternates: { canonical: `/${book.number}` },
   };
 }
 

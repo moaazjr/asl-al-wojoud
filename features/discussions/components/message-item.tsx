@@ -66,7 +66,9 @@ export function MessageItem({
   const showMenu = canEdit || canDelete || canPin;
   const canPost =
     discussion.status === "open" &&
-    api.user?.role === "admin";
+    api.user?.role === "admin" &&
+    (api.settings?.commentsEnabled ?? true) &&
+    !(api.settings?.lockedSections.includes(discussion.sectionId) ?? false);
 
   const avatarSize = isReply ? "h-7 w-7 text-[0.7rem]" : "h-9 w-9 text-sm";
 

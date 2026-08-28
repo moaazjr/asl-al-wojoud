@@ -5,6 +5,7 @@ import type { Discussion, Message } from "@/interfaces/types";
 import { getCommentService } from "@/services/container";
 import { useAuth } from "@/features/auth/use-auth";
 import { useNotifications } from "@/features/notifications/use-notifications";
+import { useSettings } from "@/features/settings/settings-context";
 
 export function useSectionDiscussions(
   sectionId: string,
@@ -12,6 +13,7 @@ export function useSectionDiscussions(
 ) {
   const { user } = useAuth();
   const { refresh: refreshNotifications } = useNotifications();
+  const { settings } = useSettings();
   const [discussions, setDiscussions] = React.useState<Discussion[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -50,21 +52,22 @@ export function useSectionDiscussions(
       const d = await getCommentService().createComment(
         { ...base, text },
         user,
+        settings,
       );
       reload();
       return d;
     },
-    [user, base, reload],
+    [user, base, reload, settings],
   );
 
   const addMessage = React.useCallback(
     async (discussionId: string, text: string, replyToMessageId?: string): Promise<void> => {
       if (!user) return;
-      await getCommentService().addMessage(discussionId, text, user, replyToMessageId);
+      await getCommentService().addMessage(discussionId, text, user, replyToMessageId, settings);
       reload();
       refreshNotifications();
     },
-    [user, reload, refreshNotifications],
+    [user, reload, refreshNotifications, settings],
   );
 
   const toggleLike = React.useCallback(
@@ -147,8 +150,10 @@ export function useSectionDiscussions(
 
   return {
     user,
+    sectionId,
     discussions,
     loading,
+    settings,
     reload,
     createComment,
     addMessage,

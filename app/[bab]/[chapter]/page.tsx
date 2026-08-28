@@ -7,6 +7,7 @@ import { CopyLinkButton } from "@/components/content/copy-link-button";
 import { ReadingProgress } from "@/components/layout/reading-progress";
 import { ChapterContent } from "@/components/content/chapter-content";
 import { ContentRenderer } from "@/components/content/content-renderer";
+import { CitationBox } from "@/components/content/citation-box";
 import { SectionComments } from "@/features/discussions/components/section-comments";
 import { getAdjacentChapters, getAllChapterSlugs, getBook, getChapter } from "@/lib/content";
 
@@ -31,7 +32,7 @@ export async function generateMetadata({
     description:
       ch.desc ?? `${ch.title} — ${ch.bookTitleOnly} · أصل الوجود`,
     alternates: {
-      canonical: `/${bab}/${chapter}`,
+      canonical: `/${ch.bookNumber}/${ch.slug}`,
     },
   };
 }
@@ -100,6 +101,10 @@ export default async function ChapterPage({
         </div>
       )}
       <ChapterContent sections={chapterData.sections} />
+
+      <div className="mt-10">
+        <CitationBox title={chapterData.title} />
+      </div>
 
       <SectionComments
         sectionId={`${bab}/${chapter}`}

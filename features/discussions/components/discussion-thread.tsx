@@ -32,6 +32,7 @@ export function DiscussionThread({
   const canResolveAction = isAdmin && discussion.status === "open";
   const canReopenAction = isAdmin && discussion.status === "resolved";
   const isResolved = discussion.status === "resolved";
+  const sectionLocked = api.settings?.lockedSections.includes(discussion.sectionId) ?? false;
 
   const allMessages = sortByPinnedThenDate(discussion.messages);
   const topLevel = allMessages.filter((m) => !m.parentMessageId);
@@ -81,11 +82,13 @@ export function DiscussionThread({
           })}
       </div>
 
-      {isResolved && (
+      {(isResolved || sectionLocked) && (
         <div className="flex items-center justify-center gap-1.5 px-4 pb-3">
           <Lock className="h-3 w-3 text-ink-faint" />
           <span className="font-kufi text-[0.7rem] text-ink-faint">
-            هذا التعليق مُغلق ولا يمكن الردّ عليه
+            {sectionLocked
+              ? "هذا المبحث مقفل — لا يمكن الردّ على التعليقات"
+              : "هذا التعليق مُغلق ولا يمكن الردّ عليه"}
           </span>
         </div>
       )}

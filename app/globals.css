@@ -47,9 +47,9 @@
   --color-line: var(--line);
   --color-line-soft: var(--line-soft);
 
-  --font-amiri: var(--font-amiri), serif;
-  --font-kufi: var(--font-kufi), sans-serif;
-  --font-naskh: var(--font-naskh), serif;
+  --font-amiri: var(--font-noto-sans-arabic), sans-serif;
+  --font-kufi: var(--font-noto-sans-arabic), sans-serif;
+  --font-naskh: var(--font-noto-sans-arabic), sans-serif;
 
   --radius: 0.625rem;
 

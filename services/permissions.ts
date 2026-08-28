@@ -12,6 +12,9 @@ export const permissions = {
   canDeleteAny: (role: Role) => role === "admin",
   canAccessAdmin: (role: Role) => role === "admin",
   canManageUsers: (role: Role) => role === "admin",
+  canManageSettings: (role: Role) => role === "admin",
+  canDisableComments: (role: Role) => role === "admin",
+  canLockSection: (role: Role) => role === "admin",
 } as const;
 
 export function canEditMessage(

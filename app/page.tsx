@@ -1,9 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowLeft, BookOpen, Sparkles } from "lucide-react";
 import { FadeIn } from "@/components/ui/motion";
 import { Button } from "@/components/ui/button";
 import { getToc, getStats } from "@/lib/content";
 import { siteConfig } from "@/data/site";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default function HomePage() {
   const books = getToc();

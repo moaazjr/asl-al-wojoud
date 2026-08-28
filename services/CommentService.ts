@@ -4,6 +4,7 @@ import type {
   Discussion,
   DiscussionFilter,
   Message,
+  SiteSettings,
   User,
 } from "@/interfaces/types";
 import { permissions } from "./permissions";
@@ -37,7 +38,14 @@ export class CommentService {
   async createComment(
     input: NewCommentInput,
     user: User,
+    settings?: SiteSettings,
   ): Promise<Discussion> {
+    if (settings && !settings.commentsEnabled) {
+      throw new Error("التعليقات معطّلة حاليًا");
+    }
+    if (settings && settings.lockedSections.includes(input.sectionId)) {
+      throw new Error("هذا المبحث مقفل ولا يمكن إضافة تعليقات عليه");
+    }
     const text = input.text.trim();
     if (text.length === 0) throw new Error("النص مطلوب");
     if (text.length > 1000) throw new Error("النص طويل جدًا (الحد ١٠٠٠ حرف)");
@@ -57,6 +65,7 @@ export class CommentService {
     text: string,
     user: User,
     replyToMessageId?: string,
+    settings?: SiteSettings,
   ): Promise<Message | null> {
     const trimmed = text.trim();
     if (trimmed.length === 0) throw new Error("النص مطلوب");
@@ -64,6 +73,13 @@ export class CommentService {
 
     const discussion = await this.repo.getDiscussion(discussionId);
     if (!discussion) throw new Error("التعليق غير موجود");
+
+    if (settings && !settings.commentsEnabled) {
+      throw new Error("التعليقات معطّلة حاليًا");
+    }
+    if (settings && settings.lockedSections.includes(discussion.sectionId)) {
+      throw new Error("هذا المبحث مقفل ولا يمكن الردّ عليه");
+    }
 
     const isAdmin = user.role === "admin";
     if (!isAdmin) {

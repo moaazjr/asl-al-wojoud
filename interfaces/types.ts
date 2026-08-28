@@ -82,3 +82,8 @@ export interface DiscussionFilter {
   search?: string;
   sectionId?: string;
 }
+
+export interface SiteSettings {
+  commentsEnabled: boolean;
+  lockedSections: string[];
+}

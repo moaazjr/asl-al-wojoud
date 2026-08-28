@@ -1,4 +1,4 @@
-import type { Discussion, User } from "@/interfaces/types";
+import type { Discussion, SiteSettings, User } from "@/interfaces/types";
 
 export interface CommentMeta {
   sectionId: string;
@@ -8,6 +8,7 @@ export interface CommentMeta {
 
 export interface DiscussionActions {
   user: User | null;
+  settings?: SiteSettings;
   createComment: (text: string, meta?: CommentMeta) => Promise<Discussion | null>;
   addMessage: (discussionId: string, text: string, replyToMessageId?: string) => Promise<void>;
   toggleLike: (

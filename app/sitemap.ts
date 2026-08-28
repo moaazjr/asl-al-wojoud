@@ -7,6 +7,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes: MetadataRoute.Sitemap = [
     { url: `${base}/`, lastModified: new Date(), priority: 1, changeFrequency: "monthly" },
     { url: `${base}/toc`, lastModified: new Date(), priority: 0.9, changeFrequency: "monthly" },
+    { url: `${base}/method`, lastModified: new Date(), priority: 0.8, changeFrequency: "monthly" },
+    { url: `${base}/about-project`, lastModified: new Date(), priority: 0.7, changeFrequency: "monthly" },
+    { url: `${base}/how-to-read`, lastModified: new Date(), priority: 0.7, changeFrequency: "monthly" },
+    { url: `${base}/author`, lastModified: new Date(), priority: 0.7, changeFrequency: "monthly" },
+    { url: `${base}/limits`, lastModified: new Date(), priority: 0.7, changeFrequency: "monthly" },
+    { url: `${base}/cite`, lastModified: new Date(), priority: 0.7, changeFrequency: "monthly" },
+    { url: `${base}/ask`, lastModified: new Date(), priority: 0.6, changeFrequency: "monthly" },
+    { url: `${base}/faq`, lastModified: new Date(), priority: 0.6, changeFrequency: "monthly" },
   ];
 
   for (const book of getToc()) {

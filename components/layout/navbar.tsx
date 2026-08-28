@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { SearchTrigger } from "@/components/search-trigger";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { OnThisPageSheet } from "@/components/content/on-this-page-sheet";
+import { AboutProjectDropdown } from "@/components/layout/about-project-dropdown";
 import { AuthMenu } from "@/features/auth/components/auth-menu";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { getNavOutline, getNavTree } from "@/lib/content";
@@ -37,6 +38,7 @@ export async function Navbar() {
         </div>
 
         <nav className="flex items-center gap-2">
+          <AboutProjectDropdown />
           <SearchTrigger />
           <Link
             href="/toc"

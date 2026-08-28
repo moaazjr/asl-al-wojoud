@@ -12,6 +12,7 @@ import {
 import { useDashboard } from "../use-dashboard";
 import { formatRelativeTime } from "@/lib/format";
 import { StatCard } from "./stat-card";
+import { CommentSettings } from "./comment-settings";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 
@@ -135,6 +136,8 @@ export function Overview() {
           )}
         </div>
       </div>
+
+      <CommentSettings />
     </div>
   );
 }
