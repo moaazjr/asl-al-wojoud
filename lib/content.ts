@@ -2,6 +2,7 @@ import "server-only";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { Book, ContentBlock, FlatSection, Section, TocSection } from "@/types/content";
+import { siteConfig } from "@/data/site";
 
 const GEN_DIR = resolve(process.cwd(), "data", "generated");
 
@@ -106,12 +107,18 @@ export function getAdjacent(bookNumber: number, slug: string) {
   return { prev: flat[i - 1], next: flat[i + 1] };
 }
 
+export const FRONT_MATTER_BOOK = 0;
+
+export function getBabs() {
+  return getToc().filter((b) => b.number !== FRONT_MATTER_BOOK);
+}
+
 export function getStats() {
   const flat = getFlatIndex();
   return {
-    books: getToc().length,
+    books: getBabs().length,
     sections: flat.length,
-    words: flat.reduce((sum, s) => sum + s.wordCount, 0),
+    words: siteConfig.bookWords,
     readingTimeHours: Math.round(
       flat.reduce((sum, s) => sum + s.readingTime, 0) / 60,
     ),

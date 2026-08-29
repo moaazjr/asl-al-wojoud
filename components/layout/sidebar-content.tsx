@@ -5,19 +5,48 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, X } from "lucide-react";
 import type { NavBook, NavNode } from "@/lib/content";
+import { sectionRoute } from "@/lib/route";
 import { cn } from "@/lib/utils";
 
 function useActiveRoute() {
   const pathname = usePathname();
+
   return React.useMemo(() => {
     const parts = pathname.split("/").filter(Boolean);
     const book = parts[0] ? parseInt(parts[0], 10) : NaN;
+
     return {
       book: Number.isNaN(book) ? 0 : book,
       slug: parts[1] ?? "",
     };
   }, [pathname]);
 }
+
+type SearchResult = {
+  bookNumber: number;
+  title: string;
+  num: string;
+
+  /**
+   * The actual page that contains this result.
+   *
+   * For a top-level node:
+   * pageNum === node.num
+   * pageSlug === node.slug
+   *
+   * For a nested node:
+   * pageNum/pageSlug belong to the top-level parent page.
+   */
+  pageNum: string;
+  pageSlug: string;
+
+  /**
+   * The exact section that should be targeted inside the page.
+   */
+  sectionSlug: string;
+
+  bookTitleOnly: string;
+};
 
 export function SidebarContent({
   books,
@@ -29,39 +58,82 @@ export function SidebarContent({
   const active = useActiveRoute();
   const [query, setQuery] = React.useState("");
 
-  const results = React.useMemo(() => {
+  const results = React.useMemo<SearchResult[] | null>(() => {
     const q = query.trim().toLowerCase();
+
     if (!q) return null;
-    const out: {
-      bookNumber: number;
-      slug: string;
-      title: string;
-      num: string;
-      bookTitleOnly: string;
-    }[] = [];
-    const walk = (nodes: NavNode[], book: NavBook) => {
-      for (const n of nodes) {
-        const hay = `${n.title} ${n.num}`.toLowerCase();
-        if (hay.includes(q)) {
+
+    const out: SearchResult[] = [];
+
+    /**
+     * Walk through the navigation tree.
+     *
+     * The important part here is that we keep track of the
+     * TOP-LEVEL PAGE that owns the current node.
+     *
+     * This prevents nested search results from generating
+     * invalid routes.
+     */
+    const walk = (
+      nodes: NavNode[],
+      book: NavBook,
+      parentPage?: {
+        num: string;
+        slug: string;
+      },
+    ) => {
+      for (const node of nodes) {
+        const haystack = `${node.title} ${node.num}`.toLowerCase();
+
+        /**
+         * If this is a top-level node, this node itself is the page.
+         *
+         * If this is a nested node, use the previously tracked
+         * top-level page.
+         */
+        const page = parentPage ?? {
+          num: node.num,
+          slug: node.slug,
+        };
+
+        if (haystack.includes(q)) {
           out.push({
             bookNumber: book.number,
-            slug: n.slug,
-            title: n.title,
-            num: n.num,
+            title: node.title,
+            num: node.num,
+
+            pageNum: page.num,
+            pageSlug: page.slug,
+
+            sectionSlug: node.slug,
+
             bookTitleOnly: book.titleOnly,
           });
         }
-        if (n.children.length) walk(n.children, book);
+
+        /**
+         * Children live inside the current page, so they must inherit
+         * the same page route.
+         */
+        if (node.children.length) {
+          walk(node.children, book, page);
+        }
       }
     };
-    for (const b of books) walk(b.children, b);
+
+    for (const book of books) {
+      walk(book.children, book);
+    }
+
     return out.slice(0, 60);
   }, [query, books]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
+      {/* Search */}
       <div className="relative p-3">
         <Search className="pointer-events-none absolute end-9 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
+
         <input
           type="text"
           value={query}
@@ -70,6 +142,7 @@ export function SidebarContent({
           aria-label="تصفية الفهرس"
           className="w-full rounded-lg border border-line bg-card py-2 pe-3 ps-9 font-kufi text-sm text-ink placeholder:text-ink-faint focus:border-accent-bright focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
+
         {query && (
           <button
             type="button"
@@ -82,6 +155,7 @@ export function SidebarContent({
         )}
       </div>
 
+      {/* Navigation / Search Results */}
       <nav
         className="min-h-0 flex-1 overflow-y-auto px-2 pb-6"
         aria-label="فهرس الكتاب"
@@ -93,29 +167,62 @@ export function SidebarContent({
                 لا نتائج مطابقة
               </p>
             ) : (
-              results.map((r) => {
+              results.map((result) => {
+                const pageRoute = sectionRoute(
+                  result.bookNumber,
+                  result.pageNum,
+                  result.pageSlug,
+                );
+
+                /**
+                 * The page route and the section anchor are separate.
+                 *
+                 * Example:
+                 *
+                 * /1/chapter-one#section-one
+                 *
+                 * This allows Next.js to open the correct page AND
+                 * the browser to jump directly to the matching section.
+                 */
+                const href = `${pageRoute}#${encodeURIComponent(
+                  result.sectionSlug,
+                )}`;
+
+                /**
+                 * A result is active when:
+                 *
+                 * - We're currently on its page
+                 * - The current URL hash points to this section
+                 */
                 const isActive =
-                  active.book === r.bookNumber && active.slug === r.slug;
+                  active.book === result.bookNumber &&
+                  active.slug === result.pageSlug;
+
                 return (
                   <Link
-                    key={`${r.bookNumber}-${r.slug}`}
-                    href={`/${r.bookNumber}/${r.slug}`}
+                    key={`${result.bookNumber}-${result.pageNum}-${result.sectionSlug}`}
+                    href={href}
                     onClick={onNavigate}
                     className={cn(
                       "block rounded-md px-3 py-2 transition-colors",
-                      isActive ? "bg-accent-soft" : "hover:bg-paper-deep",
+                      isActive
+                        ? "bg-accent-soft"
+                        : "hover:bg-paper-deep",
                     )}
                   >
                     <span className="mb-0.5 block font-kufi text-[0.68rem] text-accent-bright">
-                      {r.bookTitleOnly}
+                      {result.bookTitleOnly}
                     </span>
+
                     <span
                       className={cn(
                         "block font-kufi text-[0.86rem] leading-snug",
-                        isActive ? "font-semibold text-accent" : "text-ink",
+                        isActive
+                          ? "font-semibold text-accent"
+                          : "text-ink",
                       )}
                     >
-                      {r.title}
+                      {result.title}
                     </span>
                   </Link>
                 );
@@ -145,13 +252,17 @@ function BookGroup({
   onNavigate,
 }: {
   book: NavBook;
-  active: { book: number; slug: string };
+  active: {
+    book: number;
+    slug: string;
+  };
   onNavigate?: () => void;
 }) {
   const isActiveBook = active.book === book.number;
 
   return (
     <div>
+      {/* Book */}
       <Link
         href={`/${book.slug}`}
         onClick={onNavigate}
@@ -165,12 +276,16 @@ function BookGroup({
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-accent/12 font-kufi text-xs font-bold text-accent">
           {book.titleArabic}
         </span>
+
         <span className="leading-tight">{book.titleOnly}</span>
       </Link>
+
+      {/* Chapters / Sections */}
       {book.children.length > 0 && (
         <ul className="mt-1 space-y-0.5 border-s border-line-soft ps-2">
           {book.children.map((node) => {
             const isActive = isActiveBook && active.slug === node.slug;
+
             return (
               <li key={node.num}>
                 <Link
@@ -187,6 +302,7 @@ function BookGroup({
                   <span className="shrink-0 font-kufi text-[0.62rem] text-accent-bright/80">
                     {node.num}
                   </span>
+
                   <span className="truncate">{node.title}</span>
                 </Link>
               </li>

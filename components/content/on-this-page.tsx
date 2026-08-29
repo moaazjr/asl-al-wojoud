@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ListTree } from "lucide-react";
 import type { OutlineBook, OutlineNode } from "@/lib/content";
+import { sectionRoute } from "@/lib/route";
 import { cn } from "@/lib/utils";
 
 export interface OnThisPageItem {
@@ -41,7 +42,7 @@ function toItems(
 ): OnThisPageItem[] {
   return nodes.map((n) => ({
     id: `toc-${n.slug}`,
-    href: `/${bookNumber}/${n.slug}`,
+    href: sectionRoute(bookNumber, n.num, n.slug),
     num: n.num,
     title: n.title,
     level: n.level,

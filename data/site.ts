@@ -13,12 +13,13 @@ export const siteConfig = {
   orcid: "https://orcid.org/0009-0005-2410-6437",
   scholar: "https://scholar.google.com/citations?user=kZ09vkgAAAAJ",
   academia: "https://independent.academia.edu/MonzerAlsabbagh",
-  workTitle: "أصل الوجود: قراءة منهجية للقرآن من داخله",
+  workTitle: "أصل الوجود: قراءةٌ منهجيةٌ للقرآن من داخله، من المصدر إلى المصير",
   attributionPlace: "دمشق",
   attributionYear: "٢٠٢٦",
   aboutPath: "/author",
   datePublished: "2026-08-09",
   pages: 656,
+  bookWords: 345412,
   doi: "https://doi.org/10.5281/zenodo.21855463",
   url: siteUrl,
   keywords: [
@@ -36,6 +37,6 @@ export const siteConfig = {
 
 export const readingStats = {
   books: 7,
-  sections: 686,
-  words: 320562,
+  sections: 715,
+  words: 345412,
 };

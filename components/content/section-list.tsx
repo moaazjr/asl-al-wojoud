@@ -1,13 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { TocSection } from "@/types/content";
+import { sectionRoute } from "@/lib/route";
 import { cn } from "@/lib/utils";
-
-function chapterHref(bookNumber: number, num: string, slug: string) {
-  const parts = num.split(".");
-  if (parts.length <= 2) return `/${bookNumber}/${slug}`;
-  return `/${bookNumber}/${parts.slice(0, 2).join("-")}#toc-${slug}`;
-}
 
 export function SectionList({
   sections,
@@ -23,7 +18,7 @@ export function SectionList({
       {sections.map((section) => (
         <li key={section.num} id={anchor ? `toc-${section.slug}` : undefined}>
           <Link
-            href={chapterHref(bookNumber, section.num, section.slug)}
+            href={sectionRoute(bookNumber, section.num, section.slug)}
             className={cn(
               "group flex items-start gap-3 py-4 transition-colors hover:bg-paper-deep/50",
               anchor && "scroll-mt-24",
@@ -54,7 +49,7 @@ export function SectionList({
               {section.children.slice(0, 8).map((child) => (
                 <li key={child.num}>
                   <Link
-                    href={chapterHref(bookNumber, child.num, child.slug)}
+                    href={sectionRoute(bookNumber, child.num, child.slug)}
                     className="group flex items-center gap-3 py-2.5 transition-colors hover:text-accent"
                   >
                     <span className="shrink-0 font-kufi text-xs text-ink-faint">

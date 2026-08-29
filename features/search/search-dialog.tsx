@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { buildSearchRegex, extractSnippet } from "@/lib/arabic";
+import { sectionRoute } from "@/lib/route";
 import { useSearchIndex } from "./use-search";
 import type { SearchDoc } from "./types";
 
@@ -94,9 +95,11 @@ function ResultRow({
 export function SearchDialog({
   open,
   onOpenChange,
+  sectionCount,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  sectionCount: number;
 }) {
   const router = useRouter();
   const { ready, loading, ensureLoaded, search } = useSearchIndex();
@@ -127,13 +130,7 @@ export function SearchDialog({
   const navigate = React.useCallback(
     (doc: SearchDoc) => {
       onOpenChange(false);
-      const parts = doc.n.split(".");
-      if (parts.length <= 2) {
-        router.push(`/${doc.bn}/${doc.s}`);
-        return;
-      }
-      const chapterSlug = parts.slice(0, 2).join("-");
-      router.push(`/${doc.bn}/${chapterSlug}#toc-${doc.s}`);
+      router.push(sectionRoute(doc.bn, doc.n, doc.s));
     },
     [onOpenChange, router],
   );
@@ -193,7 +190,7 @@ export function SearchDialog({
           {ready && !query.trim() && (
             <div className="px-4 py-10 text-center">
               <p className="font-kufi text-sm text-ink-faint">
-                اكتب كلمة للبحث في ٦٨٦ قسمًا من الكتاب
+                اكتب كلمة للبحث في {sectionCount.toLocaleString("ar-EG-u-nu-arab")} قسمًا من الكتاب
               </p>
             </div>
           )}

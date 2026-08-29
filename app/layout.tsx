@@ -9,7 +9,9 @@ import { NotificationsProvider } from "@/features/notifications/notifications-pr
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { BackToTop } from "@/components/layout/back-to-top";
+import { ScrollToHash } from "@/components/layout/scroll-to-hash";
 import { siteConfig } from "@/data/site";
+import { getStats } from "@/lib/content";
 import { bookJsonLd } from "@/lib/jsonld";
 import "./globals.css";
 
@@ -53,6 +55,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const stats = getStats();
   return (
     <html
       lang="ar"
@@ -65,12 +68,13 @@ export default function RootLayout({
           <AuthProvider>
             <SettingsProvider>
               <NotificationsProvider>
-              <SearchProvider>
+              <SearchProvider sectionCount={stats.sections}>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(bookJsonLd) }}
           />
                 <Navbar />
+                <ScrollToHash />
                 <div className="flex flex-1 flex-col">{children}</div>
                 <Footer />
                 <BackToTop />

@@ -99,8 +99,8 @@ export default function CitePage() {
                 بالعربية
               </div>
               <p className="leading-loose text-ink-soft" dir="rtl">
-                منذر الصبّاغ، أصل الوجود: قراءة منهجية للقرآن من داخله، الطبعة
-                الأولى، دمشق {siteConfig.attributionYear}.{" "}
+                منذر الصبّاغ، أصل الوجود: قراءةٌ منهجيةٌ للقرآن من داخله، من
+                المصدر إلى المصير، الطبعة الأولى، دمشق {siteConfig.attributionYear}.{" "}
                 <span dir="ltr">https://doi.org/10.5281/zenodo.21855463</span>
               </p>
             </div>
@@ -111,7 +111,8 @@ export default function CitePage() {
               </div>
               <p className="leading-relaxed text-ink-soft" dir="ltr">
                 Alsabbagh, M. (2026). <em>Aṣl al-wujūd: A methodical reading of
-                the Qur&apos;an from within</em>. Damascus.{" "}
+                the Qur&apos;an from within, from the Origin to the
+                Destination</em>. Damascus.{" "}
                 https://doi.org/10.5281/zenodo.21855463
               </p>
             </div>
@@ -123,7 +124,7 @@ export default function CitePage() {
               <pre className="overflow-x-auto font-kufi text-xs leading-relaxed text-ink-soft" dir="ltr">
 {`@book{alsabbagh2026asl,
   author    = {Alsabbagh, Monzer},
-  title     = {أصل الوجود: قراءة منهجية للقرآن من داخله},
+  title     = {أصل الوجود: قراءةٌ منهجيةٌ للقرآن من داخله، من المصدر إلى المصير},
   year      = {2026},
   address   = {Damascus},
   pages     = {656},

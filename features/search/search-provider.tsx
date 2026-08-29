@@ -17,7 +17,13 @@ export function useSearch() {
   return React.useContext(SearchContext);
 }
 
-export function SearchProvider({ children }: { children: React.ReactNode }) {
+export function SearchProvider({
+  children,
+  sectionCount,
+}: {
+  children: React.ReactNode;
+  sectionCount: number;
+}) {
   const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -34,7 +40,7 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
   return (
     <SearchContext.Provider value={{ open, setOpen }}>
       {children}
-      <SearchDialog open={open} onOpenChange={setOpen} />
+      <SearchDialog open={open} onOpenChange={setOpen} sectionCount={sectionCount} />
     </SearchContext.Provider>
   );
 }

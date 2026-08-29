@@ -15,6 +15,7 @@ import { siteConfig } from "@/data/site";
 
 export function MobileNav({ books }: { books: NavBook[] }) {
   const [open, setOpen] = React.useState(false);
+  const close = () => setOpen(false);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -26,14 +27,15 @@ export function MobileNav({ books }: { books: NavBook[] }) {
           <Menu className="h-5 w-5" />
         </button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[300px] p-0">
-        <SheetHeader className="border-b border-line">
+      <SheetContent side="right" className="flex w-[320px] flex-col p-0">
+        <SheetHeader className="shrink-0 border-b border-line">
           <SheetTitle className="font-amiri text-xl text-accent">
             {siteConfig.shortName}
           </SheetTitle>
         </SheetHeader>
-        <div className="h-[calc(100dvh-5.5rem)]">
-          <SidebarContent books={books} onNavigate={() => setOpen(false)} />
+
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <SidebarContent books={books} onNavigate={close} />
         </div>
       </SheetContent>
     </Sheet>
