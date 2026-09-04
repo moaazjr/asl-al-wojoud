@@ -5,9 +5,30 @@ import type { Book, ContentBlock, FlatSection, Section, TocSection } from "@/typ
 import { siteConfig } from "@/data/site";
 
 const GEN_DIR = resolve(process.cwd(), "data", "generated");
+const ROOT_DIR = resolve(process.cwd());
 
 function readJson<T>(name: string): T {
   return JSON.parse(readFileSync(resolve(GEN_DIR, name), "utf8")) as T;
+}
+
+export interface SubjectIndexEntry {
+  type: "note" | "bab" | "entry";
+  text?: string;
+  title?: string;
+  num?: string;
+  level?: number;
+  summary?: string;
+  link?: string;
+  bab?: string | null;
+}
+
+let _subjectIndex: SubjectIndexEntry[] | null = null;
+export function getSubjectIndex(): SubjectIndexEntry[] {
+  if (_subjectIndex) return _subjectIndex;
+  _subjectIndex = JSON.parse(
+    readFileSync(resolve(ROOT_DIR, "فهرس_الموضوعات.json"), "utf8"),
+  ) as SubjectIndexEntry[];
+  return _subjectIndex;
 }
 
 type RawBook = Omit<Book, never>;

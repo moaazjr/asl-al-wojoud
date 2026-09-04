@@ -13,6 +13,7 @@ import { siteConfig } from "@/data/site";
 const navLinks = [
   { label: "الرئيسية", href: "/" },
   { label: "الفهرس", href: "/toc" },
+  { label: "فهرس الموضوعات", href: "/subject-index" },
   { label: "التحميل والاستشهاد", href: "/cite" },
 ] as const;
 
