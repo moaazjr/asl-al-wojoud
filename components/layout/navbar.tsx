@@ -14,6 +14,7 @@ const navLinks = [
   { label: "الرئيسية", href: "/" },
   { label: "الفهرس", href: "/toc" },
   { label: "فهرس الموضوعات", href: "/subject-index" },
+  { label: "التواصل", href: "/ask" },
   { label: "التحميل والاستشهاد", href: "/cite" },
 ] as const;
 

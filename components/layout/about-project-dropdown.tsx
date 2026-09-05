@@ -15,7 +15,6 @@ const secondaryLinks = [
   { label: "عن المؤلّف", href: "/author" },
   { label: "حدود هذا المشروع", href: "/limits" },
   { label: "التحميل والاستشهاد", href: "/cite" },
-  { label: "اتّصل بنا", href: "/ask" },
 ] as const;
 
 export function AboutProjectDropdown() {
