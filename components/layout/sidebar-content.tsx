@@ -76,6 +76,7 @@ export function SidebarContent({
      *
      * This prevents nested search results from generating
      * invalid routes.
+     * 
      */
     const walk = (
       nodes: NavNode[],
@@ -136,6 +137,7 @@ export function SidebarContent({
 
     return out.slice(0, 60);
   }, [query, books]);
+    console.log(results);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -193,9 +195,8 @@ export function SidebarContent({
                  * This allows Next.js to open the correct page AND
                  * the browser to jump directly to the matching section.
                  */
-                const href = `${pageRoute}#${encodeURIComponent(
-                  result.anchor,
-                )}`;
+                const href = `${pageRoute}#${
+                  result.anchor}`;
 
                 /**
                  * A result is active when:
