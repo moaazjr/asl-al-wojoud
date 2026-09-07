@@ -49,6 +49,41 @@ function toItems(
   }));
 }
 
+// Distance from the top of the viewport to the reading line.
+// Accounts for the sticky navbar (top-16 = 4rem) plus breathing room so the
+// first heading just below it is the one we treat as "current".
+const READING_OFFSET = 120;
+
+// How far from the reading line an element must be to be considered a match.
+// Anything below the line remains "inactive"; only elements at/above it compete.
+const SECTION_TOLERANCE = 96;
+
+function pickActive(items: OnThisPageItem[], pathname: string): string | null {
+  const reached: { item: OnThisPageItem; dist: number }[] = [];
+
+  for (const item of items) {
+    const el = document.getElementById(item.id);
+    if (!el) continue;
+    const top = el.getBoundingClientRect().top;
+
+    // Ignore sections that are still below the reading line, unless none has
+    // reached it yet (e.g. the page is scrolled to the very top).
+    if (top <= READING_OFFSET + SECTION_TOLERANCE) {
+      reached.push({ item, dist: Math.max(0, top - READING_OFFSET) });
+    }
+  }
+
+  if (reached.length === 0) {
+    return items.find((i) => i.href === pathname)?.id ?? null;
+  }
+
+  // The active section is the one whose top edge is closest to (and above) the
+  // reading line. This works for both directions of scrolling and avoids the
+  // previous section incorrectly staying active.
+  reached.sort((a, b) => a.dist - b.dist);
+  return reached[0].item.id;
+}
+
 export function useOnThisPage(books: OutlineBook[]) {
   const pathname = usePathname();
   const router = useRouter();
@@ -69,25 +104,43 @@ export function useOnThisPage(books: OutlineBook[]) {
     return toItems(flattenDescendants(chapter), book.number);
   }, [books, pathname]);
 
+  // The item the user just clicked. The scroll observer defers to it while the
+  // smooth scroll is settling, so it never gets overridden by the previous
+  // section mid-animation.
+  const pendingRef = React.useRef<string | null>(null);
+  const pendingTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const applyPending = React.useCallback((id: string) => {
+    pendingRef.current = id;
+    setActiveId(id);
+    if (pendingTimer.current) clearTimeout(pendingTimer.current);
+    pendingTimer.current = setTimeout(() => {
+      pendingRef.current = null;
+    }, 700);
+  }, []);
+
   React.useEffect(() => {
     let raf = 0;
     const update = () => {
       raf = 0;
+
       const els = items
         .map((item) => document.getElementById(item.id))
         .filter((el): el is HTMLElement => el !== null);
+
       if (els.length === 0) {
         setActiveId(items.find((i) => i.href === pathname)?.id ?? null);
         return;
       }
-      let current: string | null = null;
-      for (const item of items) {
-        const el = document.getElementById(item.id);
-        if (!el) continue;
-        if (el.getBoundingClientRect().top <= 140) current = item.id;
-        else break;
+
+      // Right after a click, keep the clicked item highlighted until the
+      // smooth scroll settles instead of letting the previous section win.
+      if (pendingRef.current) {
+        setActiveId(pendingRef.current);
+        return;
       }
-      setActiveId(current);
+
+      setActiveId(pickActive(items, pathname));
     };
     const schedule = () => {
       if (!raf) raf = window.requestAnimationFrame(update);
@@ -102,8 +155,16 @@ export function useOnThisPage(books: OutlineBook[]) {
     };
   }, [items, pathname]);
 
+  React.useEffect(
+    () => () => {
+      if (pendingTimer.current) clearTimeout(pendingTimer.current);
+    },
+    [],
+  );
+
   const handleClick = React.useCallback(
     (item: OnThisPageItem) => {
+      applyPending(item.id);
       const el = document.getElementById(item.id);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -111,7 +172,7 @@ export function useOnThisPage(books: OutlineBook[]) {
         router.push(item.href);
       }
     },
-    [router],
+    [router, applyPending],
   );
 
   return { items, activeId, handleClick };

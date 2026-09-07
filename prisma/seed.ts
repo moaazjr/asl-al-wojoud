@@ -3,11 +3,9 @@ import { randomBytes, scryptSync } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
-const adapter = new PrismaPg({
-  connectionString:
-    process.env.DATABASE_URL ??
-    "postgresql://postgres:postgres@localhost:5432/asl_alwujud?schema=public",
-});
+const url = process.env.DATABASE_URL;
+if (!url) throw new Error("DATABASE_URL is not set");
+const adapter = new PrismaPg({ connectionString: url });
 const prisma = new PrismaClient({ adapter });
 
 function hashPassword(password: string): string {

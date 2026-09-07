@@ -12,12 +12,19 @@ interface Params {
 }
 
 export async function GET(_req: NextRequest, { params }: Params) {
+  const user = await requireUser();
+  if (!user) return errorResponse("غير مصرّح", 401);
+
   const { id } = await params;
   const row = await prisma.discussion.findUnique({
     where: { id },
     include: { messages: true },
   });
   if (!row) return json(null);
+
+  if (user.role !== "admin" && row.createdById !== user.id) {
+    return errorResponse("غير مصرّح", 403);
+  }
   return json(mapDiscussion(row));
 }
 

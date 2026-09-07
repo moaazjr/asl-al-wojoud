@@ -131,20 +131,7 @@ export async function Footer() {
               </p>
             </div>
 
-            <div className="mt-10 border-t border-[#3a2f21] pt-5 font-mono text-xs leading-relaxed text-[#a99c83]" dir="ltr">
-              <p>website by : mohamed moaaz monzer</p>
-              <p className="mt-1">
-                github :{" "}
-                <a
-                  href="https://github.com/moaaz-jr"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition-colors hover:text-[#e6c470]"
-                >
-                  moaaz.jr
-                </a>
-              </p>
-            </div>
+
           </div>
 
         </div>

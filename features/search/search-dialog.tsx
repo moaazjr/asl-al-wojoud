@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { buildSearchRegex, extractSnippet } from "@/lib/arabic";
-import { sectionRoute } from "@/lib/route";
 import { useSearchIndex } from "./use-search";
 import type { SearchDoc } from "./types";
 
@@ -32,6 +31,37 @@ function Highlight({ text, query }: { text: string; query: string }) {
   }
   if (lastIdx < text.length) parts.push(text.slice(lastIdx));
   return <>{parts}</>;
+}
+
+// Build the URL pathname + the exact DOM anchor id for a search result.
+//
+// A search doc is either a chapter (num like "2.1" → slug "2-1") that renders
+// its own <header id="2-1">, or a section nested inside a chapter (num like
+// "2.1.4" → slug "2-1-4") that renders <section id="toc-2-1-4">.
+//
+// The chapter's pathname is derived from the first two segments of `num`.
+function searchTarget(doc: SearchDoc): {
+  pathname: string;
+  anchorId: string;
+} {
+  const parts = doc.n.split(".");
+  const isChapter = parts.length <= 2;
+  const chapterSlug = isChapter ? doc.s : parts.slice(0, 2).join("-");
+  const anchorId = isChapter ? doc.s : `toc-${doc.s}`;
+  return {
+    pathname: `/${doc.bn}/${chapterSlug}`,
+    anchorId,
+  };
+}
+
+// Scroll to a section, accounting for the sticky navbar. The target element
+// carries `scroll-mt-24` (6rem), which `scrollIntoView(block: "start")`
+// respects, so the heading lands just below the fixed header.
+function scrollToAnchor(anchorId: string, smooth = false): boolean {
+  const el = document.getElementById(anchorId);
+  if (!el) return false;
+  el.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+  return true;
 }
 
 function ResultRow({
@@ -130,7 +160,21 @@ export function SearchDialog({
   const navigate = React.useCallback(
     (doc: SearchDoc) => {
       onOpenChange(false);
-      router.push(sectionRoute(doc.bn, doc.n, doc.s));
+
+      const { pathname, anchorId } = searchTarget(doc);
+
+      // Already on the target page: scroll directly to the exact heading. This
+      // covers the same-page case (where the URL/pathname wouldn't change).
+      if (window.location.pathname === pathname) {
+        if (scrollToAnchor(anchorId, true)) {
+          return;
+        }
+      }
+
+      // Different page (or element not mounted yet): navigate with a URL hash
+      // so the ScrollToHash component can find the section after the new page
+      // has mounted and scroll to it.
+      router.push(`${pathname}#${anchorId}`);
     },
     [onOpenChange, router],
   );

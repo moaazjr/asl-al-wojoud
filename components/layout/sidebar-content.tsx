@@ -41,9 +41,12 @@ type SearchResult = {
   pageSlug: string;
 
   /**
-   * The exact section that should be targeted inside the page.
+   * The exact element id that should be scrolled to inside the page.
+   *
+   * A top-level (chapter) node renders a header with id === node.slug.
+   * A nested section renders a <section id="toc-{slug}">.
    */
-  sectionSlug: string;
+  anchor: string;
 
   bookTitleOnly: string;
 };
@@ -96,6 +99,12 @@ export function SidebarContent({
           slug: node.slug,
         };
 
+        /**
+         * Top-level (chapter) nodes render their own <header id="slug">.
+         * Nested sections render <section id="toc-{slug}">.
+         */
+        const anchor = parentPage ? `toc-${node.slug}` : node.slug;
+
         if (haystack.includes(q)) {
           out.push({
             bookNumber: book.number,
@@ -105,7 +114,7 @@ export function SidebarContent({
             pageNum: page.num,
             pageSlug: page.slug,
 
-            sectionSlug: node.slug,
+            anchor,
 
             bookTitleOnly: book.titleOnly,
           });
@@ -185,7 +194,7 @@ export function SidebarContent({
                  * the browser to jump directly to the matching section.
                  */
                 const href = `${pageRoute}#${encodeURIComponent(
-                  result.sectionSlug,
+                  result.anchor,
                 )}`;
 
                 /**
@@ -200,9 +209,23 @@ export function SidebarContent({
 
                 return (
                   <Link
-                    key={`${result.bookNumber}-${result.pageNum}-${result.sectionSlug}`}
+                    key={`${result.bookNumber}-${result.pageNum}-${result.anchor}`}
                     href={href}
-                    onClick={onNavigate}
+                    onClick={(e) => {
+                      // If we're already on the target page, scroll directly to
+                      // the heading so a same-page search result actually moves.
+                      if (
+                        active.book === result.bookNumber &&
+                        active.slug === result.pageSlug
+                      ) {
+                        const el = document.getElementById(result.anchor);
+                        if (el) {
+                          e.preventDefault();
+                          el.scrollIntoView({ block: "start" });
+                        }
+                      }
+                      onNavigate?.();
+                    }}
                     className={cn(
                       "block rounded-md px-3 py-2 transition-colors",
                       isActive
