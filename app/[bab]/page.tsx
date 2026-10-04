@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { SectionList } from "@/components/content/section-list";
 import { Button } from "@/components/ui/button";
 import { getBook } from "@/lib/content";
+import { ChapterListTracker } from "./chapter-tracker";
 
 export function generateStaticParams() {
   return Array.from({ length: 7 }, (_, i) => ({ bab: String(i + 1) }));
@@ -38,6 +39,7 @@ export default async function ChapterPage({
 
   return (
     <>
+      <ChapterListTracker />
       <Breadcrumbs items={[{ label: book.titleOnly }]} />
 
       <header className="mb-10 border-b border-line pb-8">

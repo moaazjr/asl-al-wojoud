@@ -10,6 +10,7 @@ import { ContentRenderer } from "@/components/content/content-renderer";
 import { CitationBox } from "@/components/content/citation-box";
 import { SectionComments } from "@/features/discussions/components/section-comments";
 import { getAdjacentChapters, getAllChapterSlugs, getBook, getChapter } from "@/lib/content";
+import { ChapterTrackerClient } from "./chapter-tracker-client";
 
 export function generateStaticParams() {
   return getAllChapterSlugs().map(({ bookNumber, slug }) => ({
@@ -54,6 +55,7 @@ export default async function ChapterPage({
 
   return (
     <>
+      <ChapterTrackerClient />
       <ReadingProgress />
 
       <Breadcrumbs
