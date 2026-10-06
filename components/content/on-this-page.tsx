@@ -41,7 +41,7 @@ function toItems(
   bookNumber: number,
 ): OnThisPageItem[] {
   return nodes.map((n) => ({
-    id: `toc-${n.slug}`,
+    id: n.slug,
     href: sectionRoute(bookNumber, n.num, n.slug),
     num: n.num,
     title: n.title,

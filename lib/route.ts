@@ -5,5 +5,5 @@ export function sectionRoute(
 ): string {
   const parts = num.split(".");
   if (parts.length <= 2) return `/${bookNumber}/${slug}`;
-  return `/${bookNumber}/${parts.slice(0, 2).join("-")}#toc-${slug}`;
+  return `/${bookNumber}/${parts.slice(0, 2).join("-")}#${slug}`;
 }

@@ -2,6 +2,8 @@ import * as React from "react";
 import type { ContentBlock } from "@/types/content";
 import { cn } from "@/lib/utils";
 
+// A citation reference such as [إبراهيم: 48]. The square brackets are kept
+// verbatim so the reference always reads `﴿verse﴾ [surah: ayah]`.
 const citationRe = /(\[[^\]]+\])/g;
 
 function renderParagraph(text: string) {
@@ -9,7 +11,10 @@ function renderParagraph(text: string) {
   return parts.map((part, i) => {
     if (part.startsWith("[") && part.endsWith("]")) {
       return (
-        <cite key={i} className="font-kufi text-[0.82em] text-accent not-italic">
+        <cite
+          key={i}
+          className="font-kufi text-[0.82em] text-accent not-italic"
+        >
           {part}
         </cite>
       );
@@ -27,22 +32,14 @@ export function ContentRenderer({
     <div className="space-y-5">
       {blocks.map((block, i) => {
         if (block.type === "callout") {
-          const display = block.citation
-            ? block.text.replace(/\[\s*[^\[\]:]+?\s*:\s*[^\[\]]+?\s*\]/, "").trim()
-            : block.text;
           return (
             <figure
               key={i}
               className="my-7 rounded-s-lg border-s-[3px] border-accent-bright bg-accent-soft/50 ps-5 pe-4 py-3"
             >
               <p className="font-amiri text-[1.15rem] leading-[2.1] text-ink">
-                {renderParagraph(display || block.text)}
+                {renderParagraph(block.text)}
               </p>
-              {block.citation && (
-                <figcaption className="mt-3 font-kufi text-xs text-accent-bright">
-                  ﴿{block.citation.surah}: {block.citation.ayah}﴾
-                </figcaption>
-              )}
             </figure>
           );
         }

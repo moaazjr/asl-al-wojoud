@@ -3,6 +3,18 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 
+const MAX_FRAMES = 300;
+const RETRY_DELAYS = [120, 400, 900, 1600, 2600];
+
+function scrollToHashId(id: string) {
+  const el =
+    document.getElementById(id) ??
+    document.getElementById(decodeURIComponent(id));
+  if (!el) return false;
+  el.scrollIntoView({ block: "start", behavior: "instant" as ScrollBehavior });
+  return true;
+}
+
 export function ScrollToHash() {
   const pathname = usePathname();
 
@@ -11,31 +23,25 @@ export function ScrollToHash() {
     if (!id) return;
 
     let raf = 0;
-    let count = 0;
-    let done = false;
+    let frames = 0;
+    let settled = false;
 
-    const doScroll = () => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ block: "start" });
-        done = true;
-      }
+    const attempt = () => {
+      if (settled) return;
+      if (scrollToHashId(id)) settled = true;
     };
 
     const tick = () => {
-      if (done) return;
-      doScroll();
-      if (!done && count++ < 200) raf = requestAnimationFrame(tick);
+      attempt();
+      if (!settled && frames++ < MAX_FRAMES) raf = requestAnimationFrame(tick);
     };
     tick();
 
-    const late1 = window.setTimeout(doScroll, 700);
-    const late2 = window.setTimeout(doScroll, 2000);
+    const timers = RETRY_DELAYS.map((delay) => window.setTimeout(attempt, delay));
 
     return () => {
       cancelAnimationFrame(raf);
-      window.clearTimeout(late1);
-      window.clearTimeout(late2);
+      for (const t of timers) window.clearTimeout(t);
     };
   }, [pathname]);
 
@@ -43,8 +49,7 @@ export function ScrollToHash() {
     const onHash = () => {
       const id = window.location.hash.slice(1);
       if (!id) return;
-      const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ block: "start" });
+      scrollToHashId(id);
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);

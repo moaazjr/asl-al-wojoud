@@ -37,7 +37,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
 //
 // A search doc is either a chapter (num like "2.1" → slug "2-1") that renders
 // its own <header id="2-1">, or a section nested inside a chapter (num like
-// "2.1.4" → slug "2-1-4") that renders <section id="toc-2-1-4">.
+// "2.1.4" → slug "2-1-4") that renders <section id="2-1-4">.
 //
 // The chapter's pathname is derived from the first two segments of `num`.
 function searchTarget(doc: SearchDoc): {
@@ -47,7 +47,7 @@ function searchTarget(doc: SearchDoc): {
   const parts = doc.n.split(".");
   const isChapter = parts.length <= 2;
   const chapterSlug = isChapter ? doc.s : parts.slice(0, 2).join("-");
-  const anchorId = isChapter ? doc.s : `toc-${doc.s}`;
+  const anchorId = doc.s;
   return {
     pathname: `/${doc.bn}/${chapterSlug}`,
     anchorId,
@@ -55,8 +55,8 @@ function searchTarget(doc: SearchDoc): {
 }
 
 // Scroll to a section, accounting for the sticky navbar. The target element
-// carries `scroll-mt-24` (6rem), which `scrollIntoView(block: "start")`
-// respects, so the heading lands just below the fixed header.
+// carries `scroll-mt-24`/`md:scroll-mt-28`, which `scrollIntoView(block:
+// "start")` respects, so the heading lands just below the fixed header.
 function scrollToAnchor(anchorId: string, smooth = false): boolean {
   const el = document.getElementById(anchorId);
   if (!el) return false;

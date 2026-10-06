@@ -44,17 +44,13 @@
   --color-ink-faint: var(--ink-faint);
   --color-accent: var(--accent);
   --color-accent-bright: var(--accent-bright);
+  --color-accent-soft: var(--accent-soft);
   --color-line: var(--line);
   --color-line-soft: var(--line-soft);
-
-  --font-amiri: var(--font-noto-sans-arabic), sans-serif;
-  --font-kufi: var(--font-noto-sans-arabic), sans-serif;
-  --font-naskh: var(--font-noto-sans-arabic), sans-serif;
-
-  --radius: 0.625rem;
-
-  --shadow-soft: 0 6px 24px rgba(60, 50, 30, 0.08);
-  --shadow-lift: 0 10px 30px rgba(60, 50, 30, 0.12);
+  --color-ring: var(--ring);
+  --font-kufi: var(--font-reem-kufi), system-ui, sans-serif;
+  --font-amiri: var(--font-amiri), serif;
+  --font-naskh: var(--font-noto-naskh), serif;
 }
 
 @layer base {

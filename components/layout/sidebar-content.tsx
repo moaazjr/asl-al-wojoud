@@ -44,7 +44,7 @@ type SearchResult = {
    * The exact element id that should be scrolled to inside the page.
    *
    * A top-level (chapter) node renders a header with id === node.slug.
-   * A nested section renders a <section id="toc-{slug}">.
+   * A nested section renders a <section id="{slug}">.
    */
   anchor: string;
 
@@ -102,9 +102,9 @@ export function SidebarContent({
 
         /**
          * Top-level (chapter) nodes render their own <header id="slug">.
-         * Nested sections render <section id="toc-{slug}">.
+         * Nested sections render <section id="{slug}">.
          */
-        const anchor = parentPage ? `toc-${node.slug}` : node.slug;
+        const anchor = node.slug;
 
         if (haystack.includes(q)) {
           out.push({

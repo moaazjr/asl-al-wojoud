@@ -1,4 +1,5 @@
 import type { ChapterSection } from "@/lib/content";
+import { cn } from "@/lib/utils";
 import { ContentRenderer } from "./content-renderer";
 
 const HEADING_CLASS: Record<number, string> = {
@@ -6,6 +7,8 @@ const HEADING_CLASS: Record<number, string> = {
   3: "mb-3 mt-10 font-amiri text-xl font-bold leading-snug text-ink",
   4: "mb-3 mt-8 font-kufi text-base font-bold leading-snug text-ink",
 };
+
+const SCROLL_MARGIN = "scroll-mt-24 md:scroll-mt-28";
 
 function SectionBlock({
   section,
@@ -17,8 +20,11 @@ function SectionBlock({
   const Tag = `h${headingLevel}` as "h2" | "h3" | "h4";
 
   return (
-    <section id={`toc-${section.slug}`} className="scroll-mt-24">
-      <Tag className={HEADING_CLASS[headingLevel]}>
+    <section>
+      <Tag
+        id={section.slug}
+        className={cn(HEADING_CLASS[headingLevel], SCROLL_MARGIN)}
+      >
         <span className="me-2 align-middle font-kufi text-xs font-semibold text-accent-bright">
           {section.num}
         </span>

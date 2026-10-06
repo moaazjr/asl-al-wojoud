@@ -16,14 +16,14 @@ export function SectionList({
   return (
     <ul className="divide-y divide-line-soft">
       {sections.map((section) => (
-        <li key={section.num} id={anchor ? `toc-${section.slug}` : undefined}>
-          <Link
-            href={sectionRoute(bookNumber, section.num, section.slug)}
-            className={cn(
-              "group flex items-start gap-3 py-4 transition-colors hover:bg-paper-deep/50",
-              anchor && "scroll-mt-24",
-            )}
-          >
+          <li key={section.num} id={anchor ? section.slug : undefined}>
+            <Link
+              href={sectionRoute(bookNumber, section.num, section.slug)}
+              className={cn(
+                "group flex items-start gap-3 py-4 transition-colors hover:bg-paper-deep/50",
+                anchor && "scroll-mt-24 md:scroll-mt-28",
+              )}
+            >
             <span className="mt-0.5 shrink-0 font-kufi text-xs font-semibold text-accent-bright">
               {section.num}
             </span>
