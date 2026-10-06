@@ -1,8 +1,12 @@
 import Script from "next/script";
+import { GA_MEASUREMENT_ID, GA4_MEASUREMENT_ID } from "@/lib/gtag";
 
-export const GA_MEASUREMENT_ID = "AW-18489544942";
+export { GA_MEASUREMENT_ID };
 
 export function GoogleAdsTag() {
+  const ga4Config = GA4_MEASUREMENT_ID
+    ? `\n            gtag('config', ${JSON.stringify(GA4_MEASUREMENT_ID)});`
+    : "";
   return (
     <>
       <Script
@@ -17,7 +21,7 @@ export function GoogleAdsTag() {
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}');
+            gtag('config', '${GA_MEASUREMENT_ID}');${ga4Config}
           `,
         }}
       />

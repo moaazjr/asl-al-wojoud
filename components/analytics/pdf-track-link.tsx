@@ -11,7 +11,7 @@ type PdfTrackLinkProps = ComponentProps<typeof Link> & {
 export const PdfTrackLink = forwardRef<HTMLAnchorElement, PdfTrackLinkProps>(
   ({ onClick, onTracked, ...props }, ref) => {
     const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
-      trackEvent("pdf_download");
+      trackEvent("pdf_download", { file_name: "full_book_pdf" });
       onTracked?.();
       onClick?.(event);
     };

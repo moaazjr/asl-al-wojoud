@@ -8,7 +8,7 @@ export const PdfDownloadAnchor = forwardRef<
   AnchorHTMLAttributes<HTMLAnchorElement>
 >(({ onClick, ...props }, ref) => {
   const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    trackEvent("pdf_download");
+    trackEvent("pdf_download", { file_name: "full_book_pdf" });
     onClick?.(event);
   };
 

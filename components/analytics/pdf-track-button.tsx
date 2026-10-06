@@ -18,7 +18,7 @@ export function PdfTrackButton({
   ...props
 }: PdfTrackButtonProps) {
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    trackEvent("pdf_download");
+    trackEvent("pdf_download", { file_name: "full_book_pdf" });
     onClick?.(event);
   };
 
