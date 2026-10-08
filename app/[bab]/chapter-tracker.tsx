@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { trackEvent } from "@/lib/gtag";
 
 export function ChapterListTracker() {
   const pathname = usePathname();
@@ -17,7 +16,7 @@ export function ChapterListTracker() {
     }
     if (trackedRef.current === pathname) return;
     trackedRef.current = pathname;
-    trackEvent("chapter_open");
+    // Do not fire chapter_open for book list pages (TOC-like)
   }, [pathname]);
 
   return null;

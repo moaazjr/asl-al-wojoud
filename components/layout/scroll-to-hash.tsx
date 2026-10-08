@@ -7,9 +7,20 @@ const MAX_FRAMES = 300;
 const RETRY_DELAYS = [120, 400, 900, 1600, 2600];
 
 function scrollToHashId(id: string) {
-  const el =
+  let el =
     document.getElementById(id) ??
     document.getElementById(decodeURIComponent(id));
+
+  // Backward compatibility for old advertisement URLs
+  if (!el && id.startsWith("toc-")) {
+    const altId = id.slice(4);
+    el = document.getElementById(altId);
+  }
+  if (!el && !id.startsWith("toc-")) {
+    const altId = `toc-${id}`;
+    el = document.getElementById(altId);
+  }
+
   if (!el) return false;
   el.scrollIntoView({ block: "start", behavior: "instant" as ScrollBehavior });
   return true;

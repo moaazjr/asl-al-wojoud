@@ -11,6 +11,7 @@ import { Footer } from "@/components/layout/footer";
 import { BackToTop } from "@/components/layout/back-to-top";
 import { ScrollToHash } from "@/components/layout/scroll-to-hash";
 import { GoogleAdsTag } from "@/components/analytics/google-ads-tag";
+import { ChapterTracker } from "@/components/analytics/chapter-tracker";
 import { siteConfig } from "@/data/site";
 import { getStats } from "@/lib/content";
 import { bookJsonLd } from "@/lib/jsonld";
@@ -81,6 +82,7 @@ export default function RootLayout({
                   />
                   <Navbar />
                   <ScrollToHash />
+                  <ChapterTracker />
                   <div className="flex flex-1 flex-col">{children}</div>
                   <Footer />
                   <BackToTop />

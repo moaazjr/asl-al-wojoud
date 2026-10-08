@@ -78,7 +78,7 @@ export function HomeCitation() {
                 className="mt-auto inline-flex w-fit items-center gap-2 rounded-lg bg-accent px-5 py-2.5 font-kufi text-sm font-semibold text-paper transition-colors hover:bg-accent-bright"
               >
                 <Download className="h-4 w-4" aria-hidden />
-                تحميل PDF
+                حمّل الكتاب كاملاً (PDF)
               </PdfDownloadAnchor>
             </article>
           </FadeIn>
