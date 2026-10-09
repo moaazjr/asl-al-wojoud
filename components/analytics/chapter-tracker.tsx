@@ -22,7 +22,7 @@ export function ChapterTracker() {
     }
 
     trackedPathRef.current = pathname;
-    trackEvent("chapter_open");
+    trackEvent("chapter_open", { chapter_path: pathname });
   }, [pathname]);
 
   return null;

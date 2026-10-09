@@ -8,9 +8,9 @@ import { ReadingProgress } from "@/components/layout/reading-progress";
 import { ChapterContent } from "@/components/content/chapter-content";
 import { ContentRenderer } from "@/components/content/content-renderer";
 import { CitationBox } from "@/components/content/citation-box";
+import { FullBookDownloadButton } from "@/components/analytics/full-book-download-button";
 import { SectionComments } from "@/features/discussions/components/section-comments";
 import { getAdjacentChapters, getAllChapterSlugs, getBook, getChapter } from "@/lib/content";
-import { ChapterTrackerClient } from "./chapter-tracker-client";
 
 export function generateStaticParams() {
   return getAllChapterSlugs().map(({ bookNumber, slug }) => ({
@@ -55,7 +55,6 @@ export default async function ChapterPage({
 
   return (
     <>
-      <ChapterTrackerClient />
       <ReadingProgress />
 
       <Breadcrumbs
@@ -113,6 +112,19 @@ export default async function ChapterPage({
         sectionTitle={chapterData.title}
         bookTitle={book?.titleOnly ?? `الباب ${bookNumber}`}
       />
+
+      <section className="mt-10 rounded-2xl border border-line bg-card p-6 text-center">
+        <h2 className="font-amiri text-xl font-bold text-ink">
+          هل أعجبك هذا الفصل؟
+        </h2>
+        <p className="mx-auto mt-2 max-w-xl font-kufi text-sm leading-relaxed text-ink-soft">
+          حمّل الكتاب كاملاً بصيغة PDF واقرأ جميع الأبواب والفصول دون اتصال
+          بالإنترنت.
+        </p>
+        <div className="mt-5 flex justify-center">
+          <FullBookDownloadButton />
+        </div>
+      </section>
 
       <PrevNextNav prev={prev} next={next} />
     </>

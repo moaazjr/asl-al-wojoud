@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Download, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { PageHeader } from "@/components/layout/prose";
-import { PdfDownloadLink } from "@/components/analytics/pdf-download-link";
+import { FullBookDownloadButton } from "@/components/analytics/full-book-download-button";
 import { siteConfig } from "@/data/site";
 
 export const metadata: Metadata = {
@@ -56,15 +55,7 @@ export default function CitePage() {
             هذا المعرّف يشير دائماً إلى أحدث نسخةٍ من الكتاب. اعتمده في كل
             استشهاد.
           </p>
-          <PdfDownloadLink
-            href="https://zenodo.org/records/21855464"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 font-kufi text-sm font-semibold text-paper transition-colors hover:bg-accent-bright"
-          >
-            <Download className="h-4 w-4" aria-hidden />
-            حمّل الكتاب كاملاً (PDF)
-          </PdfDownloadLink>
+          <FullBookDownloadButton className="mt-4" />
         </section>
 
         <section>

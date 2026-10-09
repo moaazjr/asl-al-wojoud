@@ -14,6 +14,7 @@ import {
   ShieldAlert,
   Loader2,
   ExternalLink,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/use-auth";
@@ -27,6 +28,7 @@ const NAV = [
   { href: "/dashboard/resolved", label: "التعليقات المغلقة", icon: CheckCircle2 },
   { href: "/dashboard/recent", label: "أحدث التعليقات", icon: Clock },
   { href: "/dashboard/users", label: "المستخدمون", icon: Users },
+  { href: "/admin/analytics", label: "تحليلات الموقع", icon: BarChart3 },
   { href: "/dashboard/settings", label: "الإعدادات", icon: Settings },
 ] as const;
 

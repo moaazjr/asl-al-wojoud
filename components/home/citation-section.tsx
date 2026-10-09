@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Download, ExternalLink, Quote } from "lucide-react";
+import { ExternalLink, Quote } from "lucide-react";
 import { FadeIn } from "@/components/ui/motion";
-import { PdfDownloadAnchor } from "@/components/analytics/pdf-download-anchor";
+import { FullBookDownloadButton } from "@/components/analytics/full-book-download-button";
 import { siteConfig } from "@/data/site";
 
 const DOI = "10.5281/zenodo.21855463";
@@ -71,15 +71,7 @@ export function HomeCitation() {
               >
                 https://doi.org/{DOI}
               </a>
-              <PdfDownloadAnchor
-                href="https://zenodo.org/records/21855464"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-auto inline-flex w-fit items-center gap-2 rounded-lg bg-accent px-5 py-2.5 font-kufi text-sm font-semibold text-paper transition-colors hover:bg-accent-bright"
-              >
-                <Download className="h-4 w-4" aria-hidden />
-                حمّل الكتاب كاملاً (PDF)
-              </PdfDownloadAnchor>
+              <FullBookDownloadButton className="mt-auto w-fit" />
             </article>
           </FadeIn>
         </div>
