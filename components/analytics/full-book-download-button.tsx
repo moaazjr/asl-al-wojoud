@@ -25,6 +25,8 @@ export function FullBookDownloadButton({
         trackEvent("pdf_download", {
           file_name: FULL_BOOK_PDF_FILE_NAME,
           content_type: "full_book",
+          link_url: FULL_BOOK_PDF_PATH,
+          transport_type: "beacon",
         });
         onClick?.(event);
       }}

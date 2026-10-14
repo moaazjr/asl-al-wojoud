@@ -1,6 +1,6 @@
 export const GA_MEASUREMENT_ID = "AW-18489544942";
 export const GA4_MEASUREMENT_ID =
-  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || "G-XXXXXXXXXX";
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || "G-QQHBWPCYLE";
 
 declare global {
   interface Window {

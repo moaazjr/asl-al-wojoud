@@ -6,6 +6,8 @@ import { PrevNextNav } from "@/components/content/prev-next-nav";
 import { CopyLinkButton } from "@/components/content/copy-link-button";
 import { ReadingProgress } from "@/components/layout/reading-progress";
 import { ChapterContent } from "@/components/content/chapter-content";
+import { ChapterEndNavigationBox } from "@/components/content/chapter-end-navigation-box";
+import { ChapterIntroBanner } from "@/components/content/chapter-intro-banner";
 import { ContentRenderer } from "@/components/content/content-renderer";
 import { CitationBox } from "@/components/content/citation-box";
 import { FullBookDownloadButton } from "@/components/analytics/full-book-download-button";
@@ -53,6 +55,8 @@ export default async function ChapterPage({
   const book = getBook(bookNumber);
   const { prev, next } = getAdjacentChapters(bookNumber, chapter);
 
+  const showBookNavigation = bookNumber === 6 && chapter === "6-1";
+
   return (
     <>
       <ReadingProgress />
@@ -66,6 +70,8 @@ export default async function ChapterPage({
 
       <header
         id={chapterData.slug}
+        data-chapter-id={`${bab}/${chapter}`}
+        data-chapter-title={chapterData.title}
         className="group relative mb-8 scroll-mt-24 border-b border-line pb-6"
       >
         <span className="mb-3 inline-block rounded-md bg-accent-soft px-2.5 py-1 font-kufi text-xs font-semibold text-accent">
@@ -96,12 +102,16 @@ export default async function ChapterPage({
         </div>
       </header>
 
+      {showBookNavigation && <ChapterIntroBanner />}
+
       {chapterData.blocks.length > 0 && (
         <div className="mt-6">
           <ContentRenderer blocks={chapterData.blocks} />
         </div>
       )}
       <ChapterContent sections={chapterData.sections} />
+
+      {showBookNavigation && <ChapterEndNavigationBox />}
 
       <div className="mt-10">
         <CitationBox title={chapterData.title} />
