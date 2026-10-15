@@ -123,9 +123,7 @@ export function CommentsSection({
         <div className="flex flex-col items-center gap-2 py-10 text-center">
           <Inbox className="h-7 w-7 text-ink-faint/50" />
           <p className="font-kufi text-sm text-ink-faint">
-            {user
-              ? "لا توجد تعليقات بعد — كن أول من يعلّق على هذا المبحث"
-              : "لا توجد تعليقات بعد — سجّل الدخول وابدأ بإضافة تعليق"}
+            لا توجد تعليقات بعد — كن أول من يعلّق على هذا المبحث
           </p>
         </div>
       ) : (

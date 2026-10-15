@@ -1,8 +1,10 @@
 import type { Prisma } from "@prisma/client";
 import type {
   AppNotification,
+  CommentModerationStatus,
   Discussion,
   Message,
+  PublicComment,
   User,
 } from "@/interfaces/types";
 
@@ -10,6 +12,7 @@ type NoExt = Record<string, never>;
 type UserRow = Prisma.UserGetPayload<NoExt>;
 type MessageRow = Prisma.MessageGetPayload<NoExt>;
 type NotificationRow = Prisma.NotificationGetPayload<NoExt>;
+type PublicCommentRow = Prisma.PublicCommentGetPayload<NoExt>;
 type DiscussionWithMessages = Prisma.DiscussionGetPayload<{
   include: { messages: true };
 }>;
@@ -78,5 +81,57 @@ export function mapDiscussion(d: DiscussionWithMessages): Discussion {
     createdAt: d.createdAt.getTime(),
     createdById: d.createdById,
     messages: d.messages.map(mapMessage),
+  };
+}
+
+const COMMENT_STATUS_MAP: Record<
+  PublicCommentRow["status"],
+  CommentModerationStatus
+> = {
+  PENDING: "pending",
+  APPROVED: "approved",
+  REJECTED: "rejected",
+};
+
+export function mapPublicComment(c: PublicCommentRow): PublicComment {
+  return {
+    id: c.id,
+    sectionId: c.sectionId,
+    sectionTitle: c.sectionTitle,
+    bookTitle: c.bookTitle,
+    name: c.name,
+    email: c.email ?? null,
+    text: c.text,
+    status: COMMENT_STATUS_MAP[c.status],
+    createdAt: c.createdAt.getTime(),
+    moderatedAt: c.moderatedAt?.getTime() ?? null,
+  };
+}
+
+export function mapPublicCommentToDiscussion(c: PublicCommentRow): Discussion {
+  const id = `pc_${c.id}`;
+  const ts = c.createdAt.getTime();
+  return {
+    id,
+    sectionId: c.sectionId,
+    sectionTitle: c.sectionTitle,
+    bookTitle: c.bookTitle,
+    status: "open",
+    createdAt: ts,
+    createdById: `public:${c.id}`,
+    hasAdminReply: false,
+    isPublic: true,
+    messages: [
+      {
+        id: `pc_m_${c.id}`,
+        discussionId: id,
+        authorId: `public:${c.id}`,
+        authorName: c.name,
+        authorRole: "user",
+        text: c.text,
+        createdAt: ts,
+        likes: [],
+      },
+    ],
   };
 }

@@ -47,6 +47,22 @@ export interface Discussion {
   createdById: string;
   messages: Message[];
   hasAdminReply?: boolean;
+  isPublic?: boolean;
+}
+
+export type CommentModerationStatus = "pending" | "approved" | "rejected";
+
+export interface PublicComment {
+  id: string;
+  sectionId: string;
+  sectionTitle: string;
+  bookTitle: string;
+  name: string;
+  email: string | null;
+  text: string;
+  status: CommentModerationStatus;
+  createdAt: number;
+  moderatedAt: number | null;
 }
 
 export type NotificationType =

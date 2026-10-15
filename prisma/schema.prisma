@@ -21,6 +21,12 @@ enum DiscussionStatus {
   RESOLVED
 }
 
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id           String         @id @default(cuid())
   name         String
@@ -91,6 +97,24 @@ model Message {
 
   @@index([discussionId])
   @@index([parentMessageId])
+}
+
+model PublicComment {
+  id            String        @id @default(cuid())
+  sectionId     String
+  sectionTitle  String
+  bookTitle     String
+  name          String
+  email         String?
+  text          String
+  status        CommentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  moderatedAt   DateTime?
+  moderatedById String?
+
+  @@index([sectionId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Notification {

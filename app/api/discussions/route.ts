@@ -8,7 +8,11 @@ import {
   requireUser,
   requireAdmin,
 } from "@/lib/api-helpers";
-import { mapDiscussion, sortDiscussionsByLastMessage } from "@/lib/db";
+import {
+  mapDiscussion,
+  mapPublicCommentToDiscussion,
+  sortDiscussionsByLastMessage,
+} from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -28,11 +32,21 @@ export async function GET(req: NextRequest) {
   }
 
   if (sectionId) {
-    const rows = await prisma.discussion.findMany({
-      where: { kind: "DISCUSSION", sectionId },
-      include: { messages: true },
-    });
-    return json(sortDiscussionsByLastMessage(rows.map(mapDiscussion)));
+    const [rows, approvedComments] = await Promise.all([
+      prisma.discussion.findMany({
+        where: { kind: "DISCUSSION", sectionId },
+        include: { messages: true },
+      }),
+      prisma.publicComment.findMany({
+        where: { sectionId, status: "APPROVED" },
+        orderBy: { createdAt: "asc" },
+      }),
+    ]);
+    const merged = [
+      ...rows.map(mapDiscussion),
+      ...approvedComments.map(mapPublicCommentToDiscussion),
+    ];
+    return json(sortDiscussionsByLastMessage(merged));
   }
 
   const admin = await requireAdmin();

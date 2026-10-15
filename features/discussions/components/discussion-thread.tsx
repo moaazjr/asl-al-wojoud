@@ -28,7 +28,8 @@ export function DiscussionThread({
 }) {
   const isAdmin = role === "admin";
   const isOwner = currentUserId === discussion.createdById;
-  const canManage = isAdmin || isOwner;
+  const isPublic = discussion.isPublic === true;
+  const canManage = (isAdmin || isOwner) && !isPublic;
   const canResolveAction = isAdmin && discussion.status === "open";
   const canReopenAction = isAdmin && discussion.status === "resolved";
   const isResolved = discussion.status === "resolved";
@@ -40,7 +41,12 @@ export function DiscussionThread({
   return (
     <article className="overflow-hidden rounded-2xl border border-line bg-paper shadow-soft dark:bg-paper/80 dark:shadow-none">
       <div className="flex items-center gap-2 px-4 pt-3">
-        {isResolved ? (
+        {isPublic ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 font-kufi text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 className="h-3 w-3" />
+            معتمد
+          </span>
+        ) : isResolved ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 font-kufi text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="h-3 w-3" />
             مُغلَق
@@ -82,7 +88,7 @@ export function DiscussionThread({
           })}
       </div>
 
-      {(isResolved || sectionLocked) && (
+      {(isResolved || sectionLocked) && !isPublic && (
         <div className="flex items-center justify-center gap-1.5 px-4 pb-3">
           <Lock className="h-3 w-3 text-ink-faint" />
           <span className="font-kufi text-[0.7rem] text-ink-faint">

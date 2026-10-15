@@ -9,6 +9,8 @@ export interface CommentMeta {
 export interface DiscussionActions {
   user: User | null;
   settings?: SiteSettings;
+  sectionTitle?: string;
+  bookTitle?: string;
   createComment: (text: string, meta?: CommentMeta) => Promise<Discussion | null>;
   addMessage: (discussionId: string, text: string, replyToMessageId?: string) => Promise<void>;
   toggleLike: (

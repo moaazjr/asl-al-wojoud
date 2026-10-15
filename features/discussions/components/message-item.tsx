@@ -57,14 +57,16 @@ export function MessageItem({
 
   const isAdmin = message.authorRole === "admin";
   const liked = currentUserId ? message.likes.includes(currentUserId) : false;
+  const isPublic = discussion.isPublic === true;
   const canEdit =
-    role != null && canEditMessage(role, message, currentUserId ?? "");
+    !isPublic && role != null && canEditMessage(role, message, currentUserId ?? "");
   const canDelete =
-    role != null && canDeleteMessage(role, message, currentUserId ?? "");
-  const canPin = role != null && permissions.canPin(role);
+    !isPublic && role != null && canDeleteMessage(role, message, currentUserId ?? "");
+  const canPin = !isPublic && role != null && permissions.canPin(role);
   const isPinned = discussion.pinnedMessageId === message.id;
   const showMenu = canEdit || canDelete || canPin;
   const canPost =
+    !isPublic &&
     discussion.status === "open" &&
     api.user?.role === "admin" &&
     (api.settings?.commentsEnabled ?? true) &&
@@ -168,7 +170,7 @@ export function MessageItem({
             <>
               <div
                 className={`w-fit max-w-full rounded-2xl px-3.5 py-2.5 ${
-                  isAdmin
+                  isAdmin && !isPublic
                     ? "bg-accent-soft/50 ring-1 ring-accent/10"
                     : "bg-paper-deep/70 dark:bg-paper-deep/40"
                 }`}
@@ -183,7 +185,7 @@ export function MessageItem({
                   <span className="font-kufi text-[0.8rem] font-bold text-ink">
                     {message.authorName}
                   </span>
-                  {isAdmin && (
+                  {isAdmin && !isPublic && (
                     <span className="inline-flex items-center gap-0.5">
                       <Badge variant="admin" className="px-1.5 py-0 text-[0.55rem]">
                         مشرف
@@ -202,26 +204,28 @@ export function MessageItem({
                   {formatRelativeTime(message.createdAt)}
                   {message.editedAt && " · مُعدّل"}
                 </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    currentUserId &&
-                    void api.toggleLike(discussion.id, message.id)
-                  }
-                  className={`inline-flex items-center gap-1 font-kufi text-[0.7rem] font-semibold transition-colors ${
-                    liked
-                      ? "text-rose-600 dark:text-rose-400"
-                      : "text-ink-faint hover:text-ink"
-                  }`}
-                >
-                  <Heart
-                    className={`h-3.5 w-3.5 ${liked ? "fill-current" : ""}`}
-                  />
-                  إعجاب
-                  {message.likes.length > 0 && (
-                    <span className="font-bold">{message.likes.length}</span>
-                  )}
-                </button>
+                {!isPublic && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      currentUserId &&
+                      void api.toggleLike(discussion.id, message.id)
+                    }
+                    className={`inline-flex items-center gap-1 font-kufi text-[0.7rem] font-semibold transition-colors ${
+                      liked
+                        ? "text-rose-600 dark:text-rose-400"
+                        : "text-ink-faint hover:text-ink"
+                    }`}
+                  >
+                    <Heart
+                      className={`h-3.5 w-3.5 ${liked ? "fill-current" : ""}`}
+                    />
+                    إعجاب
+                    {message.likes.length > 0 && (
+                      <span className="font-bold">{message.likes.length}</span>
+                    )}
+                  </button>
+                )}
 
                 {!isReply && canPost && !replying && (
                   <button

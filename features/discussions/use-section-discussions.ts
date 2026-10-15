@@ -151,6 +151,8 @@ export function useSectionDiscussions(
   return {
     user,
     sectionId,
+    sectionTitle: meta.sectionTitle,
+    bookTitle: meta.bookTitle,
     discussions,
     loading,
     settings,
