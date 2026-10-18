@@ -77,17 +77,23 @@ export async function POST(req: NextRequest) {
   if (email && !isLikelyEmail(email))
     return errorResponse("البريد الإلكتروني غير صالح.");
 
-  const row = await prisma.publicComment.create({
-    data: {
-      sectionId,
-      sectionTitle,
-      bookTitle,
-      name,
-      email: email || null,
-      text,
-      status: "PENDING",
-    },
-  });
+  let row;
+  try {
+    row = await prisma.publicComment.create({
+      data: {
+        sectionId,
+        sectionTitle,
+        bookTitle,
+        name,
+        email: email || null,
+        text,
+        status: "PENDING",
+      },
+    });
+  } catch (err) {
+    console.error("[comments] create failed", err);
+    return errorResponse("فشل حفظ التعليق. يرجى المحاولة مرة أخرى.", 500);
+  }
 
   try {
     await sendPendingCommentNotification({

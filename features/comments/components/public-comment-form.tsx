@@ -67,11 +67,13 @@ export function PublicCommentForm({
       setWebsite("");
       setSent(true);
     } catch (err) {
-      setError(
-        err instanceof Error && err.message
-          ? err.message
-          : "تعذّر إرسال التعليق. حاول مرة أخرى.",
-      );
+      const message =
+        err instanceof TypeError ||
+        !(err instanceof Error) ||
+        !err.message.trim()
+          ? "تعذّر إرسال التعليق. تحقّق من اتصالك بالإنترنت وحاول مرة أخرى."
+          : err.message;
+      setError(message);
     } finally {
       setBusy(false);
     }
