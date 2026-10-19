@@ -6,7 +6,7 @@ export default function CommentsModerationPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="تعديل التعليقات"
+        title="التعليقات المعلّقة"
         desc="مراجعة وموافقة على تعليقات الزوار"
       />
       <PublicCommentsManager />

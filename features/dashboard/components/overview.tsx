@@ -13,24 +13,12 @@ import { useDashboard } from "../use-dashboard";
 import { formatRelativeTime } from "@/lib/format";
 import { StatCard } from "./stat-card";
 import { CommentSettings } from "./comment-settings";
+import { PendingCommentsPanel } from "./pending-comments-panel";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 
 export function Overview() {
   const { stats, loading } = useDashboard();
-
-  if (loading || !stats) {
-    return (
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-32 animate-pulse rounded-2xl border border-line bg-paper-deep/40"
-          />
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -41,7 +29,20 @@ export function Overview() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <PendingCommentsPanel />
+
+      {loading || !stats ? (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-32 animate-pulse rounded-2xl border border-line bg-paper-deep/40"
+            />
+          ))}
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           label="إجمالي المستخدمين"
           value={stats.totalUsers}
@@ -135,7 +136,9 @@ export function Overview() {
             </ul>
           )}
         </div>
-      </div>
+          </div>
+        </>
+      )}
 
       <CommentSettings />
     </div>

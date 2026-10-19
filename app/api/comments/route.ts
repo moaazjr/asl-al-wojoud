@@ -9,6 +9,12 @@ import { sendPendingCommentNotification } from "@/lib/email";
 
 type ModerationStatus = "PENDING" | "APPROVED" | "REJECTED";
 
+const MODERATION_STATUSES: ModerationStatus[] = [
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+];
+
 const MAX_NAME = 80;
 const MAX_EMAIL = 160;
 const MAX_TEXT = 2000;
@@ -33,7 +39,13 @@ export async function GET(req: NextRequest) {
   if (!admin) return errorResponse("غير مصرّح", 403);
 
   const where: Prisma.PublicCommentWhereInput = {};
-  if (status) where.status = status.toUpperCase() as ModerationStatus;
+  if (status) {
+    const normalized = status.toUpperCase() as ModerationStatus;
+    if (!MODERATION_STATUSES.includes(normalized)) {
+      return errorResponse("حالة التعليق غير صالحة.", 400);
+    }
+    where.status = normalized;
+  }
 
   const rows = await prisma.publicComment.findMany({
     where,

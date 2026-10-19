@@ -27,9 +27,12 @@ export function PublicCommentsManager() {
   const [busyId, setBusyId] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState("");
   const [tab, setTab] = React.useState<"all" | CommentModerationStatus>("pending");
+  const [notice, setNotice] = React.useState<string | null>(null);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       if (tab === "all") {
         const pending = await listPublicComments("pending");
@@ -43,6 +46,8 @@ export function PublicCommentsManager() {
         const data = await listPublicComments(tab);
         setComments(data);
       }
+    } catch {
+      setLoadError("تعذّر تحميل التعليقات. حاول تحديث الصفحة.");
     } finally {
       setLoading(false);
     }
@@ -61,9 +66,14 @@ export function PublicCommentsManager() {
 
   async function handleApprove(id: string) {
     setBusyId(id);
+    setNotice(null);
+    setLoadError(null);
     try {
       await moderatePublicComment(id, "approve");
+      setNotice("تمت الموافقة على التعليق.");
       await load();
+    } catch {
+      setLoadError("تعذّرت الموافقة على التعليق. حاول مرة أخرى.");
     } finally {
       setBusyId(null);
     }
@@ -71,9 +81,14 @@ export function PublicCommentsManager() {
 
   async function handleReject(id: string) {
     setBusyId(id);
+    setNotice(null);
+    setLoadError(null);
     try {
       await moderatePublicComment(id, "reject");
+      setNotice("تم رفض التعليق.");
       await load();
+    } catch {
+      setLoadError("تعذّر رفض التعليق. حاول مرة أخرى.");
     } finally {
       setBusyId(null);
     }
@@ -82,9 +97,14 @@ export function PublicCommentsManager() {
   async function handleDelete(id: string) {
     if (!confirm("هل تريد حذف هذا التعليق نهائيًا؟")) return;
     setBusyId(id);
+    setNotice(null);
+    setLoadError(null);
     try {
       await deletePublicComment(id);
+      setNotice("تم حذف التعليق نهائيًا.");
       await load();
+    } catch {
+      setLoadError("تعذّر حذف التعليق. حاول مرة أخرى.");
     } finally {
       setBusyId(null);
     }
@@ -120,7 +140,13 @@ export function PublicCommentsManager() {
             className="ps-9"
           />
         </div>
-        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+        <Tabs
+          value={tab}
+          onValueChange={(v) => {
+            setTab(v as typeof tab);
+            setNotice(null);
+          }}
+        >
           <TabsList>
             <TabsTrigger value="pending">
               بانتظار الموافقة
@@ -132,6 +158,23 @@ export function PublicCommentsManager() {
           </TabsList>
         </Tabs>
       </div>
+
+      {notice && (
+        <p
+          role="status"
+          className="rounded-lg border border-emerald-300/50 bg-emerald-500/5 px-3 py-2 font-kufi text-xs text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-400/5 dark:text-emerald-400"
+        >
+          {notice}
+        </p>
+      )}
+      {loadError && (
+        <p
+          role="alert"
+          className="rounded-lg border border-rose-300/50 bg-rose-500/5 px-3 py-2 font-kufi text-xs text-rose-600 dark:border-rose-400/30 dark:bg-rose-400/5 dark:text-rose-400"
+        >
+          {loadError}
+        </p>
+      )}
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-12 text-center">
