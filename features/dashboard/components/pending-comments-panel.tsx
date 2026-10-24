@@ -9,6 +9,7 @@ import {
   ExternalLink,
   Loader2,
   MessageSquareText,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import type { PublicComment } from "@/interfaces/types";
@@ -16,6 +17,7 @@ import { formatRelativeTime } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  deletePublicComment,
   listPublicComments,
   moderatePublicComment,
 } from "@/features/comments/api";
@@ -72,6 +74,23 @@ export function PendingCommentsPanel() {
           ? "تعذّرت الموافقة على التعليق. حاول مرة أخرى."
           : "تعذّر رفض التعليق. حاول مرة أخرى.",
       );
+      await load();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("هل تريد حذف هذا التعليق نهائيًا؟ لا يمكن التراجع.")) return;
+    setBusyId(id);
+    setNotice(null);
+    setError(null);
+    try {
+      await deletePublicComment(id);
+      setComments((prev) => prev.filter((c) => c.id !== id));
+      setNotice("تم حذف التعليق نهائيًا.");
+    } catch {
+      setError("تعذّر حذف التعليق. حاول مرة أخرى.");
       await load();
     } finally {
       setBusyId(null);
@@ -172,6 +191,16 @@ export function PendingCommentsPanel() {
                 >
                   <XCircle className="h-3.5 w-3.5" />
                   الرفض
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-rose-600 dark:text-rose-400"
+                  onClick={() => handleDelete(c.id)}
+                  disabled={busyId === c.id}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  حذف
                 </Button>
                 <Link
                   href={`/${c.sectionId}#section-comments`}
