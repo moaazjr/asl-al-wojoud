@@ -43,6 +43,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     return errorResponse("غير مصرّح بحذف هذا التعليق", 403);
   }
 
+  await prisma.notification.deleteMany({ where: { discussionId: id } });
   await prisma.discussion.delete({ where: { id } });
   return json({ ok: true });
 }

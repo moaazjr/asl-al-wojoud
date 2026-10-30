@@ -150,7 +150,11 @@ export async function fetchAnalytics(range: AnalyticsRange): Promise<AnalyticsDa
       }),
     ]);
 
-  const overviewRow = overviewRes?.rows?.[0];
+  if (!overviewRes) {
+    throw new Error("GA4 reports failed");
+  }
+
+  const overviewRow = overviewRes.rows?.[0];
   const overview: AnalyticsOverview = {
     activeUsers: toNumber(overviewRow?.metricValues?.[0]?.value),
     totalUsers: toNumber(overviewRow?.metricValues?.[1]?.value),

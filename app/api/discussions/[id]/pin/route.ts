@@ -19,6 +19,21 @@ export async function POST(req: NextRequest, { params }: Params) {
   const messageId = String(body.messageId ?? "");
   if (!messageId) return errorResponse("معرّف التعليق مطلوب");
 
+  const [discussion, message] = await Promise.all([
+    prisma.discussion.findUnique({
+      where: { id },
+      select: { id: true },
+    }),
+    prisma.message.findUnique({
+      where: { id: messageId },
+      select: { discussionId: true },
+    }),
+  ]);
+  if (!discussion) return errorResponse("التعليق غير موجود", 404);
+  if (!message || message.discussionId !== id) {
+    return errorResponse("التعليق غير موجود", 404);
+  }
+
   await prisma.discussion.update({
     where: { id },
     data: { pinnedMessageId: messageId },
@@ -31,7 +46,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   if (!admin) return errorResponse("غير مصرّح", 403);
 
   const { id } = await params;
-  await prisma.discussion.update({
+  await prisma.discussion.updateMany({
     where: { id },
     data: { pinnedMessageId: null },
   });

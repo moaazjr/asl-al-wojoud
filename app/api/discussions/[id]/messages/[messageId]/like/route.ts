@@ -15,22 +15,26 @@ export async function POST(_req: NextRequest, { params }: Params) {
   if (!user) return errorResponse("غير مصرّح", 401);
 
   const { id, messageId } = await params;
-  const message = await prisma.message.findUnique({
-    where: { id: messageId },
-  });
-  if (!message || message.discussionId !== id)
-    return errorResponse("التعليق غير موجود", 404);
 
-  const likes = message.likes as string[];
-  const idx = likes.indexOf(user.id);
-  const updated =
-    idx === -1
-      ? [...likes, user.id]
-      : likes.filter((uid) => uid !== user.id);
+  const found = await prisma.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<
+      { likes: string[]; discussionId: string }[]
+    >`SELECT "likes", "discussionId" FROM "Message" WHERE "id" = ${messageId} FOR UPDATE`;
+    const message = rows[0];
+    if (!message || message.discussionId !== id) return false;
 
-  await prisma.message.update({
-    where: { id: messageId },
-    data: { likes: updated },
+    const likes = message.likes;
+    const updated = likes.includes(user.id)
+      ? likes.filter((uid) => uid !== user.id)
+      : [...likes, user.id];
+
+    await tx.message.update({
+      where: { id: messageId },
+      data: { likes: updated },
+    });
+    return true;
   });
+
+  if (!found) return errorResponse("التعليق غير موجود", 404);
   return json({ ok: true });
 }

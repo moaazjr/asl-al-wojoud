@@ -7,6 +7,7 @@ import {
   requireUser,
 } from "@/lib/api-helpers";
 import { mapMessage } from "@/lib/db";
+import { getSiteSettings } from "@/lib/settings";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -27,6 +28,15 @@ export async function POST(req: NextRequest, { params }: Params) {
     where: { id },
   });
   if (!discussion) return errorResponse("التعليق غير موجود", 404);
+  if (discussion.status !== "OPEN") {
+    return errorResponse("هذا التعليق مُغلق ولا يمكن الردّ عليه.", 409);
+  }
+
+  const settings = await getSiteSettings();
+  if (!settings.commentsEnabled)
+    return errorResponse("التعليقات معطّلة حاليًا.", 403);
+  if (settings.lockedSections.includes(discussion.sectionId))
+    return errorResponse("هذا المبحث مقفل ولا يمكن الردّ عليه.", 403);
 
   const isAdmin = user.role === "admin";
   if (!isAdmin) {
@@ -36,6 +46,15 @@ export async function POST(req: NextRequest, { params }: Params) {
   const parentMessageId = body.parentMessageId
     ? String(body.parentMessageId)
     : null;
+  if (parentMessageId) {
+    const parent = await prisma.message.findUnique({
+      where: { id: parentMessageId },
+      select: { discussionId: true },
+    });
+    if (!parent || parent.discussionId !== id) {
+      return errorResponse("التعليق الأصلي غير موجود.", 400);
+    }
+  }
 
   const message = await prisma.message.create({
     data: {

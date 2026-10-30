@@ -61,7 +61,7 @@ export function useSearchIndex() {
         const doc = docsRef.current[id as number];
         if (doc) out.push(doc);
       }
-      return out;
+      return out.slice(0, limit);
     },
     [],
   );

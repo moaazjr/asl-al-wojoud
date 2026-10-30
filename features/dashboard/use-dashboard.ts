@@ -21,7 +21,7 @@ export function useDashboard() {
     Promise.all([svc.listAll(), getUserRepository().count()])
       .then(([all, userCount]) => {
         setDiscussions(all);
-        return svc.getStats(userCount);
+        return svc.getStats(userCount, all);
       })
       .then(setStats)
       .catch(() => void 0)

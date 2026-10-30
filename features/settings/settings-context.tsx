@@ -3,27 +3,23 @@
 import * as React from "react";
 import type { SiteSettings } from "@/interfaces/types";
 
-const STORAGE_KEY = "aa:settings";
-
 const DEFAULTS: SiteSettings = {
   commentsEnabled: true,
   lockedSections: [],
 };
 
-function load(): SiteSettings {
-  if (typeof window === "undefined") return DEFAULTS;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULTS;
-    const parsed = JSON.parse(raw) as Partial<SiteSettings>;
-    return { ...DEFAULTS, ...parsed };
-  } catch {
-    return DEFAULTS;
-  }
-}
-
-function save(settings: SiteSettings) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+async function requestSettings(
+  init?: RequestInit,
+): Promise<SiteSettings> {
+  const res = await fetch("/api/settings", {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!res.ok) throw new Error("تعذّر تحديث الإعدادات.");
+  return (await res.json()) as SiteSettings;
 }
 
 interface SettingsCtx {
@@ -38,46 +34,68 @@ const Ctx = React.createContext<SettingsCtx | null>(null);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = React.useState<SiteSettings>(DEFAULTS);
-  const loaded = React.useRef(false);
 
-  React.useEffect(() => {
-    if (!loaded.current) {
-      loaded.current = true;
-      setSettings(load());
+  const refresh = React.useCallback(async () => {
+    try {
+      setSettings(await requestSettings());
+    } catch {
+      setSettings(DEFAULTS);
     }
   }, []);
 
   React.useEffect(() => {
-    if (loaded.current) save(settings);
-  }, [settings]);
-
-  React.useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) setSettings(load());
+    const run = async () => {
+      await refresh();
     };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
+    void run();
+  }, [refresh]);
 
-  const setCommentsEnabled = React.useCallback((enabled: boolean) => {
-    setSettings((prev) => ({ ...prev, commentsEnabled: enabled }));
-  }, []);
+  const commit = React.useCallback(
+    async (patch: Partial<SiteSettings>, optimistic: SiteSettings) => {
+      setSettings(optimistic);
+      try {
+        setSettings(
+          await requestSettings({
+            method: "PATCH",
+            body: JSON.stringify(patch),
+          }),
+        );
+      } catch {
+        void refresh();
+      }
+    },
+    [refresh],
+  );
 
-  const lockSection = React.useCallback((sectionId: string) => {
-    setSettings((prev) => ({
-      ...prev,
-      lockedSections: prev.lockedSections.includes(sectionId)
-        ? prev.lockedSections
-        : [...prev.lockedSections, sectionId],
-    }));
-  }, []);
+  const setCommentsEnabled = React.useCallback(
+    (enabled: boolean) => {
+      void commit(
+        { commentsEnabled: enabled },
+        { ...settings, commentsEnabled: enabled },
+      );
+    },
+    [commit, settings],
+  );
 
-  const unlockSection = React.useCallback((sectionId: string) => {
-    setSettings((prev) => ({
-      ...prev,
-      lockedSections: prev.lockedSections.filter((id) => id !== sectionId),
-    }));
-  }, []);
+  const lockSection = React.useCallback(
+    (sectionId: string) => {
+      const id = sectionId.trim();
+      if (!id || settings.lockedSections.includes(id)) return;
+      const lockedSections = [...settings.lockedSections, id];
+      void commit({ lockedSections }, { ...settings, lockedSections });
+    },
+    [commit, settings],
+  );
+
+  const unlockSection = React.useCallback(
+    (sectionId: string) => {
+      const lockedSections = settings.lockedSections.filter(
+        (id) => id !== sectionId,
+      );
+      void commit({ lockedSections }, { ...settings, lockedSections });
+    },
+    [commit, settings],
+  );
 
   const isSectionLocked = React.useCallback(
     (sectionId: string) => settings.lockedSections.includes(sectionId),

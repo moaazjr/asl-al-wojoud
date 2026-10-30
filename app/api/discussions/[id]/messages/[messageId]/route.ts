@@ -18,6 +18,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const body = await req.json().catch(() => ({}));
   const text = String(body.text ?? "").trim();
   if (!text) return errorResponse("النص مطلوب");
+  if (text.length > 1000) return errorResponse("النص طويل جدًا");
 
   const message = await prisma.message.findUnique({
     where: { id: messageId },
@@ -56,6 +57,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   });
 
   if (count <= 1) {
+    await prisma.notification.deleteMany({ where: { discussionId: id } });
     await prisma.discussion.delete({ where: { id } });
   } else {
     await prisma.message.delete({ where: { id: messageId } });

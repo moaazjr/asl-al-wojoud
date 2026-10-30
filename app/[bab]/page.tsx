@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { SectionList } from "@/components/content/section-list";
 import { Button } from "@/components/ui/button";
+import { BookDownloadCta } from "@/components/analytics/book-download-cta";
 import { getBook } from "@/lib/content";
 import { ChapterListTracker } from "./chapter-tracker";
 
@@ -55,6 +56,8 @@ export default async function ChapterPage({
           {book.titleOnly}
         </h1>
       </header>
+
+      <BookDownloadCta />
 
       <SectionList
         sections={book.sections}

@@ -13,6 +13,7 @@ import {
   mapPublicCommentToDiscussion,
   sortDiscussionsByLastMessage,
 } from "@/lib/db";
+import { getSiteSettings } from "@/lib/settings";
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -53,7 +54,13 @@ export async function GET(req: NextRequest) {
   if (!admin) return errorResponse("غير مصرّح", 403);
 
   const where: Prisma.DiscussionWhereInput = { kind: "DISCUSSION" };
-  if (status) where.status = status.toUpperCase() as "OPEN" | "RESOLVED";
+  if (status) {
+    const normalized = status.toUpperCase();
+    if (normalized !== "OPEN" && normalized !== "RESOLVED") {
+      return errorResponse("حالة التعليق غير صالحة.", 400);
+    }
+    where.status = normalized;
+  }
   if (search) {
     where.OR = [
       { sectionTitle: { contains: search, mode: "insensitive" } },
@@ -88,6 +95,12 @@ export async function POST(req: NextRequest) {
   if (!text) return errorResponse("النص مطلوب");
   if (text.length > 1000)
     return errorResponse("النص طويل جدًا (الحد ١٠٠٠ حرف)");
+
+  const settings = await getSiteSettings();
+  if (!settings.commentsEnabled)
+    return errorResponse("التعليقات معطّلة حاليًا.", 403);
+  if (settings.lockedSections.includes(sectionId))
+    return errorResponse("هذا المبحث مقفل ولا يمكن إضافة تعليقات عليه.", 403);
 
   const row = await prisma.discussion.create({
     data: {

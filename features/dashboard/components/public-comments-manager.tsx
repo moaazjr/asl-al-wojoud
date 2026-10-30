@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   CheckCircle2,
   Clock,
+  Loader2,
   MessageSquareText,
   Search,
   Trash2,
@@ -23,7 +24,8 @@ import {
 
 export function PublicCommentsManager() {
   const [comments, setComments] = React.useState<PublicComment[]>([]);
-  const [, setLoading] = React.useState(true);
+  const [loading, setLoading] = React.useState(true);
+  const requestRef = React.useRef(0);
   const [busyId, setBusyId] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState("");
   const [tab, setTab] = React.useState<"all" | CommentModerationStatus>("pending");
@@ -31,37 +33,38 @@ export function PublicCommentsManager() {
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
+    const requestId = ++requestRef.current;
     setLoading(true);
     setLoadError(null);
     try {
+      let next: PublicComment[];
       if (tab === "all") {
-        const pending = await listPublicComments("pending");
-        const approved = await listPublicComments("approved");
-        const rejected = await listPublicComments("rejected");
-        const combined = [...pending, ...approved, ...rejected].sort(
+        const [pending, approved, rejected] = await Promise.all([
+          listPublicComments("pending"),
+          listPublicComments("approved"),
+          listPublicComments("rejected"),
+        ]);
+        next = [...pending, ...approved, ...rejected].sort(
           (a, b) => b.createdAt - a.createdAt,
         );
-        setComments(combined);
       } else {
-        const data = await listPublicComments(tab);
-        setComments(data);
+        next = await listPublicComments(tab);
       }
+      if (requestId !== requestRef.current) return;
+      setComments(next);
     } catch {
+      if (requestId !== requestRef.current) return;
       setLoadError("تعذّر تحميل التعليقات. حاول تحديث الصفحة.");
     } finally {
-      setLoading(false);
+      if (requestId === requestRef.current) setLoading(false);
     }
   }, [tab]);
 
   React.useEffect(() => {
-    let active = true;
     const run = async () => {
-      if (active) await load();
+      await load();
     };
-    run();
-    return () => {
-      active = false;
-    };
+    void run();
   }, [load]);
 
   async function handleApprove(id: string) {
@@ -150,7 +153,9 @@ export function PublicCommentsManager() {
           <TabsList>
             <TabsTrigger value="pending">
               بانتظار الموافقة
-              {pendingCount > 0 && <span className="ms-1 opacity-70">({pendingCount})</span>}
+              {(tab === "all" || tab === "pending") && pendingCount > 0 && (
+                <span className="ms-1 opacity-70">({pendingCount})</span>
+              )}
             </TabsTrigger>
             <TabsTrigger value="approved">معتمد</TabsTrigger>
             <TabsTrigger value="rejected">مرفوض</TabsTrigger>
@@ -176,7 +181,11 @@ export function PublicCommentsManager() {
         </p>
       )}
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center rounded-2xl border border-line py-12">
+          <Loader2 className="h-5 w-5 animate-spin text-ink-faint" />
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-12 text-center">
           <MessageSquareText className="h-6 w-6 text-ink-faint" />
           <p className="font-kufi text-sm text-ink-faint">لا توجد تعليقات</p>

@@ -24,8 +24,7 @@ export function OnThisPageSheet({ books }: { books: OutlineBook[] }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="فتح قائمة محتويات الصفحة"
-        className="fixed left-2 top-[50%] z-50 flex h-9 w-9 items-center justify-center rounded-full border border-line bg-card text-ink-soft shadow-lift transition-colors hover:text-accent lg:hidden"
-        // className="fixed left-2 top-[60%] z-50 flex h-9 w-9 -mt-100 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-card text-ink-soft shadow-lift transition-colors hover:text-accent lg:hidden"
+        className="fixed left-2 top-1/2 z-50 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-card text-ink-soft shadow-lift transition-colors hover:text-accent lg:hidden"
       >
         <ChevronLeft
           className={cn(

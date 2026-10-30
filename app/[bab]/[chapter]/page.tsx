@@ -6,13 +6,16 @@ import { PrevNextNav } from "@/components/content/prev-next-nav";
 import { CopyLinkButton } from "@/components/content/copy-link-button";
 import { ReadingProgress } from "@/components/layout/reading-progress";
 import { ChapterContent } from "@/components/content/chapter-content";
+import { ChapterJumpLink } from "@/components/content/chapter-jump-link";
 import { ChapterEndNavigationBox } from "@/components/content/chapter-end-navigation-box";
 import { ChapterIntroBanner } from "@/components/content/chapter-intro-banner";
 import { ContentRenderer } from "@/components/content/content-renderer";
 import { CitationBox } from "@/components/content/citation-box";
+import { BookDownloadCta } from "@/components/analytics/book-download-cta";
 import { FullBookDownloadButton } from "@/components/analytics/full-book-download-button";
 import { SectionComments } from "@/features/discussions/components/section-comments";
 import { getAdjacentChapters, getAllChapterSlugs, getBook, getChapter } from "@/lib/content";
+import { toUthmaniQuranSpans } from "@/lib/quran-uthmani";
 
 export function generateStaticParams() {
   return getAllChapterSlugs().map(({ bookNumber, slug }) => ({
@@ -56,6 +59,7 @@ export default async function ChapterPage({
   const { prev, next } = getAdjacentChapters(bookNumber, chapter);
 
   const showBookNavigation = bookNumber === 6 && chapter === "6-1";
+  const isTruthChapter = bookNumber === 2 && chapter === "2-2";
 
   return (
     <>
@@ -85,7 +89,7 @@ export default async function ChapterPage({
         </div>
         {chapterData.desc && (
           <p className="mt-3 max-w-2xl font-naskh text-[0.95rem] leading-loose text-ink-soft">
-            {chapterData.desc}
+            {toUthmaniQuranSpans(chapterData.desc)}
           </p>
         )}
         <div className="mt-4 flex flex-wrap items-center gap-4 font-kufi text-xs text-ink-faint">
@@ -102,6 +106,8 @@ export default async function ChapterPage({
         </div>
       </header>
 
+      <BookDownloadCta />
+
       {showBookNavigation && <ChapterIntroBanner />}
 
       {chapterData.blocks.length > 0 && (
@@ -109,7 +115,31 @@ export default async function ChapterPage({
           <ContentRenderer blocks={chapterData.blocks} />
         </div>
       )}
-      <ChapterContent sections={chapterData.sections} />
+      <ChapterContent
+        sections={chapterData.sections}
+        interstitials={
+          isTruthChapter
+            ? {
+                "2-2-4": (
+                  <ChapterJumpLink
+                    href="#2-2-1-1"
+                    label="عُد إلى أصل السؤال"
+                    quote="وما الذي يترتب على وجود عاقل في السماء؟"
+                  />
+                ),
+              }
+            : undefined
+        }
+      />
+
+      {isTruthChapter && (
+        <ChapterJumpLink
+          href="#2-2-8"
+          label="عُد إلى القول الجامع"
+          quote="والله خلقكم وما تعملون"
+          className="mb-0 mt-10"
+        />
+      )}
 
       {showBookNavigation && <ChapterEndNavigationBox />}
 

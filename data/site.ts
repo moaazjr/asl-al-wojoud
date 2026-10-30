@@ -1,5 +1,7 @@
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://asl-al-wojoud.vercel.app";
+const siteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+  "https://asl-al-wojoud.vercel.app"
+).replace(/\/+$/, "");
 
 export const siteConfig = {
   title: "أصل الوجود",
@@ -10,6 +12,9 @@ export const siteConfig = {
     "قراءةٌ داخليةٌ للقرآن تستنطق بنيته من داخله، تُعيد تعريف مفاهيمه الكبرى من نسيجه نفسه، وتردّ كلَّ لفظٍ إلى مصدره ومقامه.",
   author: "منذر الصبّاغ",
   authorEn: "Monzer Alsabbagh",
+  contactEmail:
+    process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() ||
+    "contact@asl-al-wojoud.vercel.app",
   orcid: "https://orcid.org/0009-0005-2410-6437",
   scholar: "https://scholar.google.com/citations?user=kZ09vkgAAAAJ",
   academia: "https://independent.academia.edu/MonzerAlsabbagh",

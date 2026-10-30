@@ -5,6 +5,7 @@ import type {
   Discussion,
   Message,
   PublicComment,
+  Question,
   User,
 } from "@/interfaces/types";
 
@@ -13,6 +14,7 @@ type UserRow = Prisma.UserGetPayload<NoExt>;
 type MessageRow = Prisma.MessageGetPayload<NoExt>;
 type NotificationRow = Prisma.NotificationGetPayload<NoExt>;
 type PublicCommentRow = Prisma.PublicCommentGetPayload<NoExt>;
+type QuestionRow = Prisma.QuestionGetPayload<NoExt>;
 type DiscussionWithMessages = Prisma.DiscussionGetPayload<{
   include: { messages: true };
 }>;
@@ -105,6 +107,18 @@ export function mapPublicComment(c: PublicCommentRow): PublicComment {
     status: COMMENT_STATUS_MAP[c.status],
     createdAt: c.createdAt.getTime(),
     moderatedAt: c.moderatedAt?.getTime() ?? null,
+  };
+}
+
+export function mapQuestion(q: QuestionRow): Question {
+  return {
+    id: q.id,
+    name: q.name,
+    email: q.email ?? null,
+    chapter: q.chapter ?? null,
+    text: q.text,
+    isRead: q.isRead,
+    createdAt: q.createdAt.getTime(),
   };
 }
 

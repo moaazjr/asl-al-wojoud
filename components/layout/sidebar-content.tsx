@@ -15,9 +15,18 @@ function useActiveRoute() {
     const parts = pathname.split("/").filter(Boolean);
     const book = parts[0] ? parseInt(parts[0], 10) : NaN;
 
+    if (typeof window === "undefined") {
+      return {
+        book: Number.isNaN(book) ? 0 : book,
+        slug: parts[1] ?? "",
+        anchor: "",
+      };
+    }
+
     return {
       book: Number.isNaN(book) ? 0 : book,
       slug: parts[1] ?? "",
+      anchor: window.location.hash.replace(/^#/, ""),
     };
   }, [pathname]);
 }
@@ -137,7 +146,6 @@ export function SidebarContent({
 
     return out.slice(0, 60);
   }, [query, books]);
-    console.log(results);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -206,7 +214,8 @@ export function SidebarContent({
                  */
                 const isActive =
                   active.book === result.bookNumber &&
-                  active.slug === result.pageSlug;
+                  active.slug === result.pageSlug &&
+                  active.anchor === result.anchor;
 
                 return (
                   <Link

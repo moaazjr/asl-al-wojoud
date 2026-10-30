@@ -103,3 +103,13 @@ export interface SiteSettings {
   commentsEnabled: boolean;
   lockedSections: string[];
 }
+
+export interface Question {
+  id: string;
+  name: string;
+  email: string | null;
+  chapter: string | null;
+  text: string;
+  isRead: boolean;
+  createdAt: number;
+}

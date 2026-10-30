@@ -35,8 +35,13 @@ export function DiscussionsManager({
   const [tab, setTab] = React.useState<"all" | DiscussionStatus>(
     lockFilter ?? "all",
   );
-  const [active, setActive] = React.useState<Discussion | null>(null);
+  const [activeId, setActiveId] = React.useState<string | null>(null);
   const [open, setOpen] = React.useState(false);
+
+  const active = React.useMemo(
+    () => discussions.find((d) => d.id === activeId) ?? null,
+    [discussions, activeId],
+  );
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -61,7 +66,7 @@ export function DiscussionsManager({
   );
 
   function openThread(d: Discussion) {
-    setActive(d);
+    setActiveId(d.id);
     setOpen(true);
   }
 

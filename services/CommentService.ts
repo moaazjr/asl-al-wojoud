@@ -215,8 +215,11 @@ export class CommentService {
     await this.repo.deleteMany(ids);
   }
 
-  async getStats(userCount: number): Promise<DashboardStats> {
-    const all = await this.repo.getAllDiscussions();
+  async getStats(
+    userCount: number,
+    discussions?: Discussion[],
+  ): Promise<DashboardStats> {
+    const all = discussions ?? (await this.repo.getAllDiscussions());
     const messages = all.flatMap((d) => d.messages);
     const open = all.filter((d) => d.status === "open").length;
     const resolved = all.filter((d) => d.status === "resolved").length;

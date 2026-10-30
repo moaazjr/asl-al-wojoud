@@ -5,6 +5,7 @@ import { CheckCircle2, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { trackEvent } from "@/lib/gtag";
 import { submitPublicComment } from "../api";
 
 const MAX_NAME = 80;
@@ -60,6 +61,11 @@ export function PublicCommentForm({
         email: email.trim() || undefined,
         text: trimmedText,
         website,
+      });
+      trackEvent("form_submit", {
+        form_name: "comment",
+        form_type: "public_comment",
+        section_id: sectionId,
       });
       setName("");
       setEmail("");

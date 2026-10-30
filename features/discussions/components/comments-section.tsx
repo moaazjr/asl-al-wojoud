@@ -50,7 +50,10 @@ export function CommentsSection({
   ];
 
   return (
-    <section className="mt-10 border-t border-line pt-6">
+    <section
+      id="section-comments"
+      className="mt-10 scroll-mt-24 border-t border-line pt-6"
+    >
       <div className="mb-4 flex items-center gap-2">
         <h2 className="flex items-center gap-1.5 font-kufi text-lg font-bold text-ink">
           <MessageSquareText className="h-4.5 w-4.5 text-accent" />

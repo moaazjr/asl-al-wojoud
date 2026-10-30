@@ -28,17 +28,17 @@ enum CommentStatus {
 }
 
 model User {
-  id           String         @id @default(cuid())
+  id           String   @id @default(cuid())
   name         String
-  email        String         @unique
+  email        String   @unique
   passwordHash String
-  role         Role           @default(USER)
-  createdAt    DateTime       @default(now())
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
 
-  discussions  Discussion[]   @relation("DiscussionAuthor")
-  messages     Message[]
+  discussions   Discussion[]   @relation("DiscussionAuthor")
+  messages      Message[]
   notifications Notification[]
-  sessions     Session[]
+  sessions      Session[]
 }
 
 model Session {
@@ -53,25 +53,25 @@ model Session {
 }
 
 model Discussion {
-  id             String           @id @default(cuid())
-  kind           Kind             @default(DISCUSSION)
-  sectionId      String
-  sectionTitle   String
-  bookTitle      String
-  blockIndex     Int
-  selectedText   String
-  charStart      Int
-  charEnd        Int
-  status         DiscussionStatus @default(OPEN)
-  resolvedAt     DateTime?
-  resolvedById   String?
+  id              String           @id @default(cuid())
+  kind            Kind             @default(DISCUSSION)
+  sectionId       String
+  sectionTitle    String
+  bookTitle       String
+  blockIndex      Int
+  selectedText    String
+  charStart       Int
+  charEnd         Int
+  status          DiscussionStatus @default(OPEN)
+  resolvedAt      DateTime?
+  resolvedById    String?
   pinnedMessageId String?
-  hasAdminReply  Boolean          @default(false)
-  createdAt      DateTime         @default(now())
+  hasAdminReply   Boolean          @default(false)
+  createdAt       DateTime         @default(now())
 
-  createdBy      User             @relation("DiscussionAuthor", fields: [createdById], references: [id], onDelete: Cascade)
-  createdById    String
-  messages       Message[]
+  createdBy   User      @relation("DiscussionAuthor", fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+  messages    Message[]
 
   @@index([sectionId])
   @@index([createdById])
@@ -79,21 +79,21 @@ model Discussion {
 }
 
 model Message {
-  id           String   @id @default(cuid())
-  discussion   Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
-  discussionId String
-  author       User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId     String
-  authorName   String
-  authorRole   Role
-  text         String
-  pinned       Boolean  @default(false)
-  likes        String[] @default([])
-  createdAt    DateTime @default(now())
-  editedAt     DateTime?
+  id              String     @id @default(cuid())
+  discussion      Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  discussionId    String
+  author          User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId        String
+  authorName      String
+  authorRole      Role
+  text            String
+  pinned          Boolean    @default(false)
+  likes           String[]   @default([])
+  createdAt       DateTime   @default(now())
+  editedAt        DateTime?
   parentMessageId String?
-  parent       Message?  @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: Cascade)
-  replies      Message[] @relation("MessageReplies")
+  parent          Message?   @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: Cascade)
+  replies         Message[]  @relation("MessageReplies")
 
   @@index([discussionId])
   @@index([parentMessageId])
@@ -114,6 +114,26 @@ model PublicComment {
 
   @@index([sectionId])
   @@index([status])
+  @@index([createdAt])
+}
+
+model SiteSetting {
+  id              String   @id @default("singleton")
+  commentsEnabled Boolean  @default(true)
+  lockedSections  String[] @default([])
+  updatedAt       DateTime @updatedAt
+}
+
+model Question {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  chapter   String?
+  text      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead])
   @@index([createdAt])
 }
 

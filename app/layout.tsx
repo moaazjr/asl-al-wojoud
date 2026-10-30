@@ -24,6 +24,11 @@ const notoSansArabic = Noto_Sans_Arabic({
   display: "swap",
 });
 
+const googleSiteVerification =
+  process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim();
+const bingSiteVerification =
+  process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION?.trim();
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
@@ -52,6 +57,12 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+  },
+  verification: {
+    google: googleSiteVerification,
+    other: bingSiteVerification
+      ? { "msvalidate.01": bingSiteVerification }
+      : undefined,
   },
 };
 

@@ -1,13 +1,14 @@
 import * as React from "react";
 import type { ContentBlock } from "@/types/content";
 import { cn } from "@/lib/utils";
+import { toUthmaniQuranSpans } from "@/lib/quran-uthmani";
 
 // A citation reference such as [إبراهيم: 48]. The square brackets are kept
 // verbatim so the reference always reads `﴿verse﴾ [surah: ayah]`.
 const citationRe = /(\[[^\]]+\])/g;
 
 function renderParagraph(text: string) {
-  const parts = text.split(citationRe);
+  const parts = toUthmaniQuranSpans(text).split(citationRe);
   return parts.map((part, i) => {
     if (part.startsWith("[") && part.endsWith("]")) {
       return (

@@ -59,29 +59,36 @@ const READING_OFFSET = 120;
 const SECTION_TOLERANCE = 96;
 
 function pickActive(items: OnThisPageItem[], pathname: string): string | null {
-  const reached: { item: OnThisPageItem; dist: number }[] = [];
+  let above: { item: OnThisPageItem; top: number } | null = null;
+  let below: { item: OnThisPageItem; top: number } | null = null;
 
   for (const item of items) {
     const el = document.getElementById(item.id);
     if (!el) continue;
     const top = el.getBoundingClientRect().top;
 
-    // Ignore sections that are still below the reading line, unless none has
-    // reached it yet (e.g. the page is scrolled to the very top).
-    if (top <= READING_OFFSET + SECTION_TOLERANCE) {
-      reached.push({ item, dist: Math.max(0, top - READING_OFFSET) });
+    // The active section is the last one whose top edge has reached the
+    // reading line. Sections that are still below it are only used when no
+    // section has reached the line yet.
+    if (top <= READING_OFFSET) {
+      if (!above || top > above.top) above = { item, top };
+    } else if (
+      top <= READING_OFFSET + SECTION_TOLERANCE &&
+      (!below || top < below.top)
+    ) {
+      below = { item, top };
     }
   }
 
-  if (reached.length === 0) {
-    return items.find((i) => i.href === pathname)?.id ?? null;
-  }
+  if (above) return above.item.id;
+  if (below) return below.item.id;
 
-  // The active section is the one whose top edge is closest to (and above) the
-  // reading line. This works for both directions of scrolling and avoids the
-  // previous section incorrectly staying active.
-  reached.sort((a, b) => a.dist - b.dist);
-  return reached[0].item.id;
+  const pageHref = pathname.split("#")[0];
+  return (
+    items.find((item) => item.href.split("#")[0] === pageHref)?.id ??
+    items[0]?.id ??
+    null
+  );
 }
 
 export function useOnThisPage(books: OutlineBook[]) {

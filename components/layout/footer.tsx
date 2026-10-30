@@ -15,7 +15,7 @@ const projectLinks = [
   { label: "فكرة المشروع وأسبابه", href: "/about-project" },
   { label: "عن المؤلّف", href: "/author" },
   { label: "حدود هذا المشروع", href: "/limits" },
-  { label: "اتّصل بنا", href: "/ask" },
+  { label: "اتّصل بنا", href: "/contact" },
 ] as const;
 
 export async function Footer() {
@@ -87,6 +87,16 @@ export async function Footer() {
               التواصل والحقوق
             </h2>
             <div className="space-y-2.5 font-kufi text-sm text-[#cfc4ab]">
+              <div>
+                <span className="text-[#a99c83]">البريد: </span>
+                <a
+                  href={`mailto:${siteConfig.contactEmail}`}
+                  className="transition-colors hover:text-[#e6c470]"
+                  dir="ltr"
+                >
+                  {siteConfig.contactEmail}
+                </a>
+              </div>
               <div>
                 <span className="text-[#a99c83]">DOI: </span>
                 <a

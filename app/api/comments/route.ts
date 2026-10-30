@@ -6,6 +6,7 @@ import { mapPublicComment } from "@/lib/db";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { sanitizeText, isLikelyEmail } from "@/lib/sanitize";
 import { sendPendingCommentNotification } from "@/lib/email";
+import { getSiteSettings } from "@/lib/settings";
 
 type ModerationStatus = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -39,6 +40,7 @@ export async function GET(req: NextRequest) {
   if (!admin) return errorResponse("غير مصرّح", 403);
 
   const where: Prisma.PublicCommentWhereInput = {};
+  if (sectionId) where.sectionId = sectionId;
   if (status) {
     const normalized = status.toUpperCase() as ModerationStatus;
     if (!MODERATION_STATUSES.includes(normalized)) {
@@ -88,6 +90,12 @@ export async function POST(req: NextRequest) {
     return errorResponse("البريد الإلكتروني طويل جدًا.");
   if (email && !isLikelyEmail(email))
     return errorResponse("البريد الإلكتروني غير صالح.");
+
+  const settings = await getSiteSettings();
+  if (!settings.commentsEnabled)
+    return errorResponse("التعليقات معطّلة حاليًا.", 403);
+  if (settings.lockedSections.includes(sectionId))
+    return errorResponse("هذا المبحث مقفل ولا يمكن إضافة تعليقات عليه.", 403);
 
   let row;
   try {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { PageHeader } from "@/components/layout/prose";
+import { QuestionForm } from "@/features/questions/question-form";
 import { siteConfig } from "@/data/site";
 
 export const metadata: Metadata = {
@@ -55,72 +56,7 @@ export default function AskPage() {
         </section>
 
         <section>
-          <form className="space-y-5 rounded-xl border border-line bg-card p-6">
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="mb-1.5 block font-kufi text-sm font-medium text-ink-soft"
-                >
-                  الاسم
-                </label>
-                <input
-                  id="name"
-                  type="text"
-                  name="name"
-                  className="w-full rounded-lg border border-line bg-paper px-3 py-2.5 font-kufi text-sm text-ink placeholder:text-ink-faint focus:border-accent-bright focus:outline-none focus:ring-2 focus:ring-accent-soft"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="mb-1.5 block font-kufi text-sm font-medium text-ink-soft"
-                >
-                  البريد الإلكترونيّ
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  name="email"
-                  className="w-full rounded-lg border border-line bg-paper px-3 py-2.5 font-kufi text-sm text-ink placeholder:text-ink-faint focus:border-accent-bright focus:outline-none focus:ring-2 focus:ring-accent-soft"
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                htmlFor="chapter"
-                className="mb-1.5 block font-kufi text-sm font-medium text-ink-soft"
-              >
-                رقم الفصل (اختياريّ)
-              </label>
-              <input
-                id="chapter"
-                type="text"
-                name="chapter"
-                className="w-full rounded-lg border border-line bg-paper px-3 py-2.5 font-kufi text-sm text-ink placeholder:text-ink-faint focus:border-accent-bright focus:outline-none focus:ring-2 focus:ring-accent-soft"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="question"
-                className="mb-1.5 block font-kufi text-sm font-medium text-ink-soft"
-              >
-                السؤال
-              </label>
-              <textarea
-                id="question"
-                name="question"
-                rows={6}
-                className="w-full resize-y rounded-lg border border-line bg-paper px-3 py-2.5 font-kufi text-sm text-ink placeholder:text-ink-faint focus:border-accent-bright focus:outline-none focus:ring-2 focus:ring-accent-soft"
-              />
-            </div>
-            <button
-              type="submit"
-              className="rounded-lg bg-accent px-6 py-2.5 font-kufi text-sm font-semibold text-paper transition-colors hover:bg-accent-bright"
-            >
-              أرسل
-            </button>
-          </form>
+          <QuestionForm />
           <p className="mt-4 text-center font-kufi text-xs text-ink-faint">
             الأسئلة تُقرأ كلُّها، والجواب يصل حين يتيسّر. وما تكرّر منها يُضاف
             إلى صفحة{" "}

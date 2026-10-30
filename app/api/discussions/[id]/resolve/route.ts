@@ -19,6 +19,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
     where: { id },
   });
   if (!discussion) return json({ ok: true });
+  if (discussion.status === "RESOLVED") return json({ ok: true });
 
   await prisma.discussion.update({
     where: { id },
