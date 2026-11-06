@@ -65,7 +65,11 @@ function questionsUrl(): string {
   return `${siteBaseUrl()}/dashboard/questions`;
 }
 
-async function sendAdminEmail(subject: string, html: string): Promise<boolean> {
+async function sendAdminEmail(
+  subject: string,
+  html: string,
+  replyTo?: string | null,
+): Promise<boolean> {
   if (!emailNotificationsConfigured()) {
     console.info(
       "[email] Notifications disabled. Set RESEND_API_KEY and ADMIN_EMAIL (or NEXT_PUBLIC_CONTACT_EMAIL) to enable.",
@@ -85,6 +89,7 @@ async function sendAdminEmail(subject: string, html: string): Promise<boolean> {
         to: [adminEmailAddress()],
         subject,
         html,
+        ...(replyTo ? { reply_to: replyTo } : {}),
       }),
     });
     if (!res.ok) {
@@ -213,6 +218,7 @@ export async function sendContactNotification(
   return sendAdminEmail(
     `رسالة تواصل جديدة — ${data.subject ?? data.name}`,
     html,
+    data.email,
   );
 }
 
@@ -249,5 +255,5 @@ export async function sendQuestionNotification(
   </body>
 </html>`;
 
-  return sendAdminEmail(`سؤال جديد — ${data.name}`, html);
+  return sendAdminEmail(`سؤال جديد — ${data.name}`, html, data.email);
 }

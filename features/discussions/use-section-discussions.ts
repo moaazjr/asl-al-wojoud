@@ -6,6 +6,9 @@ import { getCommentService } from "@/services/container";
 import { useAuth } from "@/features/auth/use-auth";
 import { useNotifications } from "@/features/notifications/use-notifications";
 import { useSettings } from "@/features/settings/settings-context";
+import { deletePublicComment } from "@/features/comments/api";
+
+const PUBLIC_PREFIX = "pc_";
 
 export function useSectionDiscussions(
   sectionId: string,
@@ -142,7 +145,12 @@ export function useSectionDiscussions(
   const deleteDiscussion = React.useCallback(
     async (discussionId: string): Promise<void> => {
       if (!user) return;
-      await getCommentService().deleteDiscussion(discussionId, user);
+      if (discussionId.startsWith(PUBLIC_PREFIX)) {
+        if (user.role !== "admin") return;
+        await deletePublicComment(discussionId.slice(PUBLIC_PREFIX.length));
+      } else {
+        await getCommentService().deleteDiscussion(discussionId, user);
+      }
       reload();
     },
     [user, reload],

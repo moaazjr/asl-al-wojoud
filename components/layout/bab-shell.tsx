@@ -20,12 +20,17 @@ export function BabShell({
   const isTopic = pathname.split("/").filter(Boolean).length >= 2;
 
   return (
-    <div className="mx-auto flex w-full max-w-[1600px] flex-1">
+    <div
+      className={cn(
+        "mx-auto flex w-full flex-1",
+        isTopic ? "max-w-[1240px]" : "max-w-[1600px]",
+      )}
+    >
       {!isTopic && sidebar}
       <main className="min-w-0 flex-1">
         <div
           className={cn(
-            "me-auto w-full px-4 py-8 sm:px-8 lg:py-12",
+            "mx-auto w-full px-4 py-8 sm:px-8 lg:py-12",
             isTopic ? "max-w-4xl" : "max-w-3xl",
           )}
         >

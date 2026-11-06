@@ -8,6 +8,7 @@ import {
   RotateCcw,
   Sparkles,
   Lock,
+  Loader2,
 } from "lucide-react";
 import type { Discussion, Role } from "@/interfaces/types";
 import type { DiscussionActions } from "../types";
@@ -30,6 +31,21 @@ export function DiscussionThread({
   const isOwner = currentUserId === discussion.createdById;
   const isPublic = discussion.isPublic === true;
   const canManage = (isAdmin || isOwner) && !isPublic;
+  const canDeletePublic = isAdmin && isPublic;
+  const [deleting, setDeleting] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
+
+  async function deletePublic() {
+    if (!confirm("هل تريد حذف هذا التعليق المعتمد نهائيًا؟ سيختفي من الصفحة ومن لوحة التحكم، ولا يمكن التراجع.")) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await api.deleteDiscussion(discussion.id);
+    } catch (err) {
+      setDeleteError(err instanceof Error && err.message ? err.message : "تعذّر حذف التعليق.");
+      setDeleting(false);
+    }
+  }
   const canResolveAction = isAdmin && discussion.status === "open";
   const canReopenAction = isAdmin && discussion.status === "resolved";
   const isResolved = discussion.status === "resolved";
@@ -96,6 +112,27 @@ export function DiscussionThread({
               ? "هذا المبحث مقفل — لا يمكن الردّ على التعليقات"
               : "هذا التعليق مُغلق ولا يمكن الردّ عليه"}
           </span>
+        </div>
+      )}
+
+      {canDeletePublic && (
+        <div className="flex flex-wrap items-center gap-2 border-t border-line-soft px-4 py-2">
+          <span className="font-kufi text-[0.7rem] text-ink-faint">تعليق زائر معتمد</span>
+          {deleteError && (
+            <span role="alert" className="font-kufi text-[0.7rem] text-rose-600 dark:text-rose-400">
+              {deleteError}
+            </span>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="ms-auto text-rose-600 dark:text-rose-400"
+            disabled={deleting}
+            onClick={() => void deletePublic()}
+          >
+            {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+            حذف التعليق
+          </Button>
         </div>
       )}
 

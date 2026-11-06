@@ -29,16 +29,18 @@ export function CommentsSection({
     setVisibleCount(PAGE_SIZE);
   }
 
+  const memberThreads = discussions.filter((d) => !d.isPublic);
   const counts = {
     all: discussions.length,
-    open: discussions.filter((d) => d.status === "open").length,
-    resolved: discussions.filter((d) => d.status === "resolved").length,
+    open: memberThreads.filter((d) => d.status === "open").length,
+    resolved: memberThreads.filter((d) => d.status === "resolved").length,
   };
+  const showFilterTabs = counts.all > 1 && memberThreads.length > 0;
 
   const visible: Discussion[] =
     filter === "all"
       ? discussions
-      : discussions.filter((d) => d.status === (filter as DiscussionStatus));
+      : memberThreads.filter((d) => d.status === (filter as DiscussionStatus));
 
   const shown = visible.slice(0, visibleCount);
   const hasMore = visible.length > visibleCount;
@@ -94,7 +96,7 @@ export function CommentsSection({
         </div>
       )}
 
-      {counts.all > 1 && (
+      {showFilterTabs && (
         <div className="mb-4 flex items-center gap-1 border-b border-line-soft pb-px">
           {filterTabs.map((tab) => (
             <button

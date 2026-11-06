@@ -18,7 +18,7 @@ export function QuestionForm() {
   const [email, setEmail] = React.useState("");
   const [chapter, setChapter] = React.useState("");
   const [question, setQuestion] = React.useState("");
-  const [website, setWebsite] = React.useState("");
+  const [trap, setTrap] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [sent, setSent] = React.useState(false);
@@ -56,7 +56,7 @@ export function QuestionForm() {
           email: email.trim() || undefined,
           chapter: chapter.trim() || undefined,
           question: trimmedQuestion,
-          website,
+          hp_field: trap,
         }),
       });
       const body = (await res.json().catch(() => ({}))) as {
@@ -73,7 +73,7 @@ export function QuestionForm() {
       setEmail("");
       setChapter("");
       setQuestion("");
-      setWebsite("");
+      setTrap("");
       setSent(true);
     } catch (err) {
       setError(
@@ -176,15 +176,16 @@ export function QuestionForm() {
       </div>
 
       <div className="hidden" aria-hidden="true">
-        <label htmlFor={`${fieldId}-website`}>Website</label>
         <input
-          id={`${fieldId}-website`}
-          name="website"
+          id={`${fieldId}-hp`}
+          name="hp_field"
           type="text"
           tabIndex={-1}
           autoComplete="off"
-          value={website}
-          onChange={(e) => setWebsite(e.target.value)}
+          data-1p-ignore
+          data-lpignore="true"
+          value={trap}
+          onChange={(e) => setTrap(e.target.value)}
         />
       </div>
 

@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
 
-  if (typeof body.website === "string" && body.website.trim() !== "") {
+  if (typeof body.hp_field === "string" && body.hp_field.trim() !== "") {
     return json({ ok: true }, 201);
   }
 
