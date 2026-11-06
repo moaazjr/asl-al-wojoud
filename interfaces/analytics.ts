@@ -98,6 +98,7 @@ export interface CommentStats {
 
 export interface Ga4Data {
   propertyId: string;
+  realtimeActiveUsers: number | null;
   overview: AnalyticsOverview;
   visitors: VisitorsSummary;
   daily: AnalyticsDailyPoint[];

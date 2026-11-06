@@ -276,6 +276,17 @@ export async function fetchGa4(
       }),
     ]);
 
+  const realtimeActiveUsers = await getClient()
+    .runRealtimeReport(
+      { property, metrics: [{ name: "activeUsers" }], minuteRanges: [{ startMinutesAgo: 29, endMinutesAgo: 0 }] },
+      { timeout: 15_000 },
+    )
+    .then(([rt]) => toNumber(rt.rows?.[0]?.metricValues?.[0]?.value))
+    .catch((error: unknown) => {
+      console.error("[ga4] realtime report failed:", describeError(error).detail);
+      return null;
+    });
+
   if (!overviewR.res) {
     const { message, detail } = describeError(overviewR.error);
     return { state: "error", message, detail };
@@ -376,6 +387,7 @@ export async function fetchGa4(
 
   const data: Ga4Data = {
     propertyId,
+    realtimeActiveUsers,
     overview,
     visitors,
     daily,

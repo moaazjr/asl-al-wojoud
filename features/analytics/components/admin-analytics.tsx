@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   XCircle,
   Info,
+  Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatCard } from "@/features/dashboard/components/stat-card";
@@ -295,7 +296,10 @@ function CommentsBlock({
 
 function Ga4Block({ data, rangeKey }: { data: Ga4Data; rangeKey: AnalyticsRangeKey }) {
   const { overview, visitors, daily } = data;
-  const noDataEver = visitors.allTime === 0 && overview.screenPageViews === 0;
+  const noDataEver =
+    visitors.allTime === 0 && overview.screenPageViews === 0 && !data.realtimeActiveUsers;
+  const awaitingProcessing =
+    visitors.allTime === 0 && overview.screenPageViews === 0 && (data.realtimeActiveUsers ?? 0) > 0;
   const periodLabel = rangeKey === "custom" ? "في الفترة المختارة" : rangeKey === "today" ? "اليوم" : `آخر ${PRESET_LABEL[rangeKey as AnalyticsPreset]}`;
 
   return (
@@ -316,6 +320,15 @@ function Ga4Block({ data, rangeKey }: { data: Ga4Data; rangeKey: AnalyticsRangeK
           </div>
         </div>
       )}
+      {awaitingProcessing && (
+        <div className="flex gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/5 p-4">
+          <Info className="mt-0.5 h-5 w-5 shrink-0 text-sky-600 dark:text-sky-400" />
+          <p className="font-kufi text-sm leading-relaxed text-ink-soft">
+            التتبّع يعمل: هناك زوّار على الموقع الآن. لكن Google Analytics يعالج التقارير اليومية بتأخير
+            24 إلى 48 ساعة، لذلك تظهر بقية المؤشّرات صفرًا مؤقتًا وستمتلئ تلقائيًا.
+          </p>
+        </div>
+      )}
       {data.partialFailures.length > 0 && (
         <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 font-kufi text-xs text-amber-700 dark:text-amber-400">
           تعذّر تحميل بعض التقارير ({data.partialFailures.join("، ")}). القيم المعروضة الأخرى صحيحة.
@@ -324,7 +337,14 @@ function Ga4Block({ data, rangeKey }: { data: Ga4Data; rangeKey: AnalyticsRangeK
 
       <section aria-labelledby="visitors-heading" className="space-y-3">
         <h2 id="visitors-heading" className="font-kufi text-sm font-semibold text-ink">الزوّار</h2>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <StatCard
+            label="على الموقع الآن"
+            value={data.realtimeActiveUsers == null ? "—" : fmt(data.realtimeActiveUsers)}
+            icon={Radio}
+            tone="emerald"
+            hint="آخر 30 دقيقة (مباشر)"
+          />
           <StatCard label="زوّار اليوم" value={fmt(visitors.today)} icon={CalendarClock} tone="sky" />
           <StatCard label="زوّار آخر ٧ أيام" value={fmt(visitors.last7Days)} icon={CalendarDays} tone="sky" />
           <StatCard label="زوّار آخر ٣٠ يومًا" value={fmt(visitors.last30Days)} icon={CalendarRange} tone="sky" />
