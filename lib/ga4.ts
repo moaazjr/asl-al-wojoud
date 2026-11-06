@@ -9,6 +9,7 @@ import type {
   Ga4Status,
   VisitorsSummary,
 } from "@/interfaces/analytics";
+import { normalizePrivateKey, privateKeyProblem } from "@/lib/ga4-key";
 
 const GA4_START_OF_TIME = "2015-08-14";
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -23,7 +24,7 @@ function env() {
   return {
     propertyId: process.env.GA4_PROPERTY_ID?.trim() ?? "",
     clientEmail: process.env.GA4_CLIENT_EMAIL?.trim() ?? "",
-    privateKey: process.env.GA4_PRIVATE_KEY?.replace(/\\n/g, "\n").trim() ?? "",
+    privateKey: normalizePrivateKey(process.env.GA4_PRIVATE_KEY),
   };
 }
 
@@ -87,6 +88,13 @@ function describeError(error: unknown): { message: string; detail: string } {
   const code = (error as { code?: number })?.code;
   const raw = error instanceof Error ? error.message : String(error);
   const detail = raw.slice(0, 300);
+  if (/DECODER|PEM|private key|asn1/i.test(raw)) {
+    return {
+      message:
+        "تعذّر قراءة GA4_PRIVATE_KEY على الخادم. انسخ قيمة private_key من ملف JSON الخاص بحساب الخدمة من جديد وضعها في متغيّرات البيئة.",
+      detail,
+    };
+  }
   switch (code) {
     case 7:
       return {
@@ -176,6 +184,11 @@ export async function fetchGa4(
 ): Promise<Ga4Status> {
   const missing = missingGa4Env();
   if (missing.length > 0) return { state: "not-configured", missing };
+
+  const keyProblem = privateKeyProblem(env().privateKey);
+  if (keyProblem) {
+    return { state: "error", message: keyProblem };
+  }
 
   const cacheKey = `${period.key}:${period.startDate}:${period.endDate}`;
   const hit = cache.get(cacheKey);
