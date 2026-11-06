@@ -14,7 +14,8 @@ import { CitationBox } from "@/components/content/citation-box";
 import { BookDownloadCta } from "@/components/analytics/book-download-cta";
 import { FullBookDownloadButton } from "@/components/analytics/full-book-download-button";
 import { SectionComments } from "@/features/discussions/components/section-comments";
-import { getAdjacentChapters, getAllChapterSlugs, getBook, getChapter } from "@/lib/content";
+import { getAdjacentChapters, getAllChapterSlugs, getBook, getChapter, getChapterExcerpt } from "@/lib/content";
+import { chapterJsonLd, serializeJsonLd } from "@/lib/jsonld";
 import { toUthmaniQuranSpans } from "@/lib/quran-uthmani";
 
 export function generateStaticParams() {
@@ -33,13 +34,21 @@ export async function generateMetadata({
   const bookNumber = parseInt(bab, 10);
   const ch = getChapter(bookNumber, chapter);
   if (!ch) return {};
+  const path = `/${ch.bookNumber}/${ch.slug}`;
+  const description = ch.desc ?? (getChapterExcerpt(ch) || `${ch.title} — ${ch.bookTitleOnly}`);
+  const title = `${ch.title} — ${ch.bookTitleOnly}`;
   return {
-    title: ch.title,
-    description:
-      ch.desc ?? `${ch.title} — ${ch.bookTitleOnly} · أصل الوجود`,
-    alternates: {
-      canonical: `/${ch.bookNumber}/${ch.slug}`,
+    title,
+    description,
+    alternates: { canonical: path },
+    openGraph: {
+      type: "article",
+      url: path,
+      title,
+      description,
+      section: ch.bookTitleOnly,
     },
+    twitter: { title, description },
   };
 }
 
@@ -61,8 +70,21 @@ export default async function ChapterPage({
   const showBookNavigation = bookNumber === 6 && chapter === "6-1";
   const isTruthChapter = bookNumber === 2 && chapter === "2-2";
 
+  const jsonLd = chapterJsonLd({
+    path: `/${chapterData.bookNumber}/${chapterData.slug}`,
+    title: chapterData.title,
+    description: chapterData.desc ?? getChapterExcerpt(chapterData),
+    bookTitle: book?.titleOnly ?? `الباب ${bookNumber}`,
+    bookPath: `/${bookNumber}`,
+    wordCount: chapterData.wordCount,
+  });
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+      />
       <ReadingProgress />
 
       <Breadcrumbs

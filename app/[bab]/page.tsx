@@ -7,6 +7,8 @@ import { SectionList } from "@/components/content/section-list";
 import { Button } from "@/components/ui/button";
 import { BookDownloadCta } from "@/components/analytics/book-download-cta";
 import { getBook } from "@/lib/content";
+import { siteConfig } from "@/data/site";
+import { breadcrumbJsonLd, serializeJsonLd } from "@/lib/jsonld";
 import { ChapterListTracker } from "./chapter-tracker";
 
 export function generateStaticParams() {
@@ -21,10 +23,15 @@ export async function generateMetadata({
   const { bab } = await params;
   const book = getBook(parseInt(bab, 10));
   if (!book) return {};
+  const topics = book.sections.slice(0, 2).map((s) => s.title).join("، ");
+  const title = book.title;
+  const description = `${book.title} من كتاب ${siteConfig.title} تأليف ${siteConfig.author} — ${book.sectionCount} مبحثاً، منها: ${topics}.`;
   return {
-    title: book.titleOnly,
-    description: `بابٌ من ${book.title} يضمّ ${book.sectionCount} مبحثاً.`,
+    title,
+    description,
     alternates: { canonical: `/${book.number}` },
+    openGraph: { url: `/${book.number}`, title, description },
+    twitter: { title, description },
   };
 }
 
@@ -40,6 +47,18 @@ export default async function ChapterPage({
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: serializeJsonLd({
+            "@context": "https://schema.org",
+            ...breadcrumbJsonLd([
+              { name: siteConfig.title, path: "/" },
+              { name: book.titleOnly, path: `/${book.number}` },
+            ]),
+          }),
+        }}
+      />
       <ChapterListTracker />
       <Breadcrumbs items={[{ label: book.titleOnly }]} />
 

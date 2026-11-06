@@ -385,3 +385,25 @@ export function getAdjacentChapters(
   if (i === -1) return {};
   return { prev: flat[i - 1], next: flat[i + 1] };
 }
+
+function collectText(node: { blocks: ContentBlock[]; children?: ChapterSection[]; sections?: ChapterSection[] }, out: string[], limit: number) {
+  for (const b of node.blocks) {
+    if (out.join(" ").length >= limit) return;
+    const text = (b.items ? b.items.join(" ") : b.text).replace(/\s+/g, " ").trim();
+    if (text) out.push(text);
+  }
+  for (const c of node.children ?? node.sections ?? []) {
+    if (out.join(" ").length >= limit) return;
+    collectText(c, out, limit);
+  }
+}
+
+export function getChapterExcerpt(chapter: Chapter, max = 160): string {
+  const parts: string[] = [];
+  collectText(chapter, parts, max * 2);
+  const text = parts.join(" ").replace(/[«»"]/g, "").trim();
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${cut.slice(0, lastSpace > max * 0.6 ? lastSpace : max).trim()}…`;
+}

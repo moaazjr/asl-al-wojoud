@@ -1,6 +1,6 @@
 const siteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-  "https://asl-al-wojoud.vercel.app"
+  "https://asl-al-wojoud.io"
 ).replace(/\/+$/, "");
 
 export const siteConfig = {
@@ -27,12 +27,23 @@ export const siteConfig = {
   bookWords: 345412,
   doi: "https://doi.org/10.5281/zenodo.21855463",
   url: siteUrl,
+  seoTitle: "أصل الوجود — قراءة منهجية للقرآن الكريم من داخله",
   keywords: [
     "أصل الوجود",
+    "كتاب أصل الوجود",
+    "منذر الصبّاغ",
+    "منذر الصباغ",
     "التدبّر القرآني",
-    "القرآن",
+    "تدبر القرآن",
+    "القرآن الكريم",
     "تفسير القرآن",
+    "التفسير الموضوعي",
     "المنظومة القرآنية",
+    "قراءة القرآن من داخله",
+    "الاستقراء القرآني",
+    "لا ترادف في القرآن",
+    "Asl Al-Wujud",
+    "Monzer Alsabbagh",
   ],
   nav: [
     { label: "الرئيسية", href: "/" },

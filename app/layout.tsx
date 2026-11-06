@@ -15,7 +15,7 @@ import { ChapterTracker } from "@/components/analytics/chapter-tracker";
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { siteConfig } from "@/data/site";
 import { getStats } from "@/lib/content";
-import { bookJsonLd } from "@/lib/jsonld";
+import { bookJsonLd, serializeJsonLd } from "@/lib/jsonld";
 import "./globals.css";
 
 const notoSansArabic = Noto_Sans_Arabic({
@@ -32,31 +32,44 @@ const bingSiteVerification =
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: siteConfig.title,
+    default: siteConfig.seoTitle,
     template: `%s · ${siteConfig.shortName}`,
   },
   description: siteConfig.description,
+  applicationName: siteConfig.title,
   keywords: [...siteConfig.keywords],
+  creator: siteConfig.author,
+  publisher: siteConfig.author,
+  category: "religion",
+  alternates: { canonical: "/" },
+  formatDetection: { telephone: false, email: false, address: false },
   authors: [
     { name: siteConfig.author, url: siteConfig.orcid },
     { name: siteConfig.authorEn, url: siteConfig.orcid },
   ],
   openGraph: {
     type: "website",
-    locale: "ar",
+    locale: "ar_AR",
     url: siteConfig.url,
     siteName: siteConfig.title,
-    title: siteConfig.title,
+    title: siteConfig.seoTitle,
     description: siteConfig.description,
   },
   twitter: {
     card: "summary_large_image",
-    title: siteConfig.title,
+    title: siteConfig.seoTitle,
     description: siteConfig.description,
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
   },
   verification: {
     google: googleSiteVerification,
@@ -89,7 +102,7 @@ export default function RootLayout({
                   <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{
-                      __html: JSON.stringify(bookJsonLd),
+                      __html: serializeJsonLd(bookJsonLd),
                     }}
                   />
                   <Navbar />
