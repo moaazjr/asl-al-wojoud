@@ -63,6 +63,25 @@ export interface PublicComment {
   status: CommentModerationStatus;
   createdAt: number;
   moderatedAt: number | null;
+  adminReply: string | null;
+  adminReplyAt: number | null;
+}
+
+export type PublicCommentFilter = CommentModerationStatus | "all";
+
+export interface PublicCommentCounts {
+  pending: number;
+  approved: number;
+  rejected: number;
+  total: number;
+}
+
+export interface PublicCommentPage {
+  items: PublicComment[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: PublicCommentCounts;
 }
 
 export type NotificationType =

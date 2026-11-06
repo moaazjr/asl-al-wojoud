@@ -1,4 +1,8 @@
-import type { CommentModerationStatus, PublicComment } from "@/interfaces/types";
+import type {
+  PublicComment,
+  PublicCommentFilter,
+  PublicCommentPage,
+} from "@/interfaces/types";
 import { apiFetch } from "@/repositories/rest/client";
 
 export interface SubmitPublicCommentInput {
@@ -8,7 +12,7 @@ export interface SubmitPublicCommentInput {
   name: string;
   email?: string;
   text: string;
-  website?: string;
+  hp_field?: string;
 }
 
 export interface SubmitPublicCommentResult {
@@ -16,6 +20,8 @@ export interface SubmitPublicCommentResult {
   id: string;
   status: "pending";
 }
+
+export type ModerationAction = "approve" | "reject" | "pending";
 
 export function submitPublicComment(
   input: SubmitPublicCommentInput,
@@ -34,23 +40,55 @@ export function listApprovedPublicComments(
   );
 }
 
+export interface ListPublicCommentsQuery {
+  status?: PublicCommentFilter;
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}
+
 export function listPublicComments(
-  status?: CommentModerationStatus,
-): Promise<PublicComment[]> {
-  const query = status ? `?status=${status}` : "";
-  return apiFetch<PublicComment[]>(`/api/comments${query}`);
+  query: ListPublicCommentsQuery = {},
+): Promise<PublicCommentPage> {
+  const params = new URLSearchParams();
+  params.set("status", query.status ?? "all");
+  if (query.q?.trim()) params.set("q", query.q.trim());
+  if (query.page) params.set("page", String(query.page));
+  if (query.pageSize) params.set("pageSize", String(query.pageSize));
+  return apiFetch<PublicCommentPage>(`/api/comments?${params.toString()}`, {
+    cache: "no-store",
+  });
 }
 
 export function moderatePublicComment(
   id: string,
-  action: "approve" | "reject",
+  action: ModerationAction,
 ): Promise<PublicComment> {
-  return apiFetch<PublicComment>(`/api/comments/${id}`, {
+  return apiFetch<PublicComment>(`/api/comments/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: JSON.stringify({ action }),
   });
 }
 
+export function replyToPublicComment(
+  id: string,
+  reply: string,
+): Promise<PublicComment> {
+  return apiFetch<PublicComment>(`/api/comments/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ action: "reply", reply }),
+  });
+}
+
+export function removePublicCommentReply(id: string): Promise<PublicComment> {
+  return apiFetch<PublicComment>(`/api/comments/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ action: "remove-reply" }),
+  });
+}
+
 export async function deletePublicComment(id: string): Promise<void> {
-  await apiFetch<{ ok: true }>(`/api/comments/${id}`, { method: "DELETE" });
+  await apiFetch<{ ok: true }>(`/api/comments/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
 }

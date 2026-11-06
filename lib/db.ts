@@ -107,7 +107,13 @@ export function mapPublicComment(c: PublicCommentRow): PublicComment {
     status: COMMENT_STATUS_MAP[c.status],
     createdAt: c.createdAt.getTime(),
     moderatedAt: c.moderatedAt?.getTime() ?? null,
+    adminReply: c.adminReply ?? null,
+    adminReplyAt: c.adminReplyAt?.getTime() ?? null,
   };
+}
+
+export function mapApprovedPublicComment(c: PublicCommentRow): PublicComment {
+  return { ...mapPublicComment(c), email: null };
 }
 
 export function mapQuestion(q: QuestionRow): Question {
@@ -124,7 +130,33 @@ export function mapQuestion(q: QuestionRow): Question {
 
 export function mapPublicCommentToDiscussion(c: PublicCommentRow): Discussion {
   const id = `pc_${c.id}`;
+  const rootId = `pc_m_${c.id}`;
   const ts = c.createdAt.getTime();
+  const messages: Message[] = [
+    {
+      id: rootId,
+      discussionId: id,
+      authorId: `public:${c.id}`,
+      authorName: c.name,
+      authorRole: "user",
+      text: c.text,
+      createdAt: ts,
+      likes: [],
+    },
+  ];
+  if (c.adminReply) {
+    messages.push({
+      id: `pc_r_${c.id}`,
+      discussionId: id,
+      authorId: `admin:${c.adminReplyById ?? "site"}`,
+      authorName: "المشرف",
+      authorRole: "admin",
+      text: c.adminReply,
+      createdAt: c.adminReplyAt?.getTime() ?? ts,
+      parentMessageId: rootId,
+      likes: [],
+    });
+  }
   return {
     id,
     sectionId: c.sectionId,
@@ -133,19 +165,8 @@ export function mapPublicCommentToDiscussion(c: PublicCommentRow): Discussion {
     status: "open",
     createdAt: ts,
     createdById: `public:${c.id}`,
-    hasAdminReply: false,
+    hasAdminReply: Boolean(c.adminReply),
     isPublic: true,
-    messages: [
-      {
-        id: `pc_m_${c.id}`,
-        discussionId: id,
-        authorId: `public:${c.id}`,
-        authorName: c.name,
-        authorRole: "user",
-        text: c.text,
-        createdAt: ts,
-        likes: [],
-      },
-    ],
+    messages,
   };
 }

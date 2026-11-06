@@ -8,7 +8,13 @@ import {
   BookOpen,
   Trophy,
   Clock,
+  Hourglass,
+  XCircle,
+  MessageSquareText,
+  BarChart3,
 } from "lucide-react";
+import Link from "next/link";
+import { usePublicCommentCounts } from "../use-pending-comments";
 import { useDashboard } from "../use-dashboard";
 import { formatRelativeTime } from "@/lib/format";
 import { StatCard } from "./stat-card";
@@ -19,6 +25,7 @@ import { Avatar } from "@/components/ui/avatar";
 
 export function Overview() {
   const { stats, loading } = useDashboard();
+  const { counts: visitorCounts, error: visitorError } = usePublicCommentCounts();
 
   return (
     <div className="space-y-6">
@@ -28,6 +35,39 @@ export function Overview() {
           ملخّص نشاط التعليقات والمستخدمين
         </p>
       </div>
+
+      <section aria-labelledby="visitor-comments-heading" className="space-y-3">
+        <div className="flex items-center gap-2">
+          <h2 id="visitor-comments-heading" className="font-kufi text-sm font-semibold text-ink">
+            تعليقات الزوّار
+          </h2>
+          <Link
+            href="/admin/analytics"
+            className="ms-auto inline-flex items-center gap-1.5 font-kufi text-xs text-ink-faint hover:text-ink"
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            تحليلات الزيارات
+          </Link>
+        </div>
+        {visitorError ? (
+          <p role="alert" className="rounded-lg border border-rose-300/50 bg-rose-500/5 px-3 py-2 font-kufi text-xs text-rose-600 dark:text-rose-400">
+            تعذّر تحميل إحصاءات تعليقات الزوّار.
+          </p>
+        ) : !visitorCounts ? (
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-32 animate-pulse rounded-2xl border border-line bg-paper-deep/40" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard label="إجمالي تعليقات الزوّار" value={visitorCounts.total} icon={MessageSquareText} />
+            <StatCard label="بانتظار المراجعة" value={visitorCounts.pending} icon={Hourglass} tone="amber" />
+            <StatCard label="معتمدة" value={visitorCounts.approved} icon={CheckCircle2} tone="emerald" />
+            <StatCard label="مرفوضة" value={visitorCounts.rejected} icon={XCircle} tone="sky" />
+          </div>
+        )}
+      </section>
 
       <PendingCommentsPanel />
 
@@ -50,18 +90,18 @@ export function Overview() {
           tone="sky"
         />
         <StatCard
-          label="إجمالي التعليقات"
+          label="رسائل المستخدمين المسجّلين"
           value={stats.totalMessages}
           icon={MessagesSquare}
         />
         <StatCard
-          label="تعليقات مفتوحة"
+          label="نقاشات مفتوحة"
           value={stats.openDiscussions}
           icon={CircleDot}
           tone="amber"
         />
         <StatCard
-          label="تعليقات مغلقة"
+          label="نقاشات مغلقة"
           value={stats.resolvedDiscussions}
           icon={CheckCircle2}
           tone="emerald"

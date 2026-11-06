@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   MessagesSquare,
+  MessageSquareText,
   CircleDot,
   CheckCircle2,
   Clock,
@@ -21,11 +22,19 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/use-auth";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { usePublicCommentCounts } from "../use-pending-comments";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  badge?: "pending";
+};
+
+const NAV: NavItem[] = [
   { href: "/dashboard", label: "نظرة عامة", icon: LayoutDashboard },
-  { href: "/dashboard/comments", label: "التعليقات المعلّقة", icon: MessagesSquare },
-  { href: "/dashboard/discussions", label: "كل التعليقات المسجلة", icon: MessagesSquare },
+  { href: "/dashboard/comments", label: "تعليقات الزوّار", icon: MessageSquareText, badge: "pending" },
+  { href: "/dashboard/discussions", label: "نقاشات المستخدمين المسجّلين", icon: MessagesSquare },
   { href: "/dashboard/open", label: "التعليقات المفتوحة", icon: CircleDot },
   { href: "/dashboard/resolved", label: "التعليقات المغلقة", icon: CheckCircle2 },
   { href: "/dashboard/recent", label: "أحدث التعليقات", icon: Clock },
@@ -33,12 +42,14 @@ const NAV = [
   { href: "/dashboard/users", label: "المستخدمون", icon: Users },
   { href: "/admin/analytics", label: "تحليلات الموقع", icon: BarChart3 },
   { href: "/dashboard/settings", label: "الإعدادات", icon: Settings },
-] as const;
+];
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, loading, isAuthenticated } = useAuth();
   const isAdmin = user?.role === "admin";
+  const { counts } = usePublicCommentCounts(isAuthenticated && isAdmin);
+  const pending = counts?.pending ?? 0;
 
   if (loading) {
     return (
@@ -103,6 +114,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
+                  {item.badge === "pending" && pending > 0 && (
+                    <span
+                      className="ms-auto rounded-full bg-amber-500 px-1.5 py-px text-[0.65rem] font-bold leading-4 text-white"
+                      aria-label={`${pending} تعليق بانتظار المراجعة`}
+                    >
+                      {pending > 99 ? "99+" : pending}
+                    </span>
+                  )}
                 </Link>
               );
             })}

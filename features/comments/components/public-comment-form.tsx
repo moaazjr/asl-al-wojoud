@@ -24,7 +24,7 @@ export function PublicCommentForm({
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [text, setText] = React.useState("");
-  const [website, setWebsite] = React.useState("");
+  const [trap, setTrap] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [sent, setSent] = React.useState(false);
@@ -60,7 +60,7 @@ export function PublicCommentForm({
         name: trimmedName,
         email: email.trim() || undefined,
         text: trimmedText,
-        website,
+        hp_field: trap,
       });
       trackEvent("form_submit", {
         form_name: "comment",
@@ -70,7 +70,7 @@ export function PublicCommentForm({
       setName("");
       setEmail("");
       setText("");
-      setWebsite("");
+      setTrap("");
       setSent(true);
     } catch (err) {
       const message =
@@ -171,15 +171,16 @@ export function PublicCommentForm({
       </div>
 
       <div className="hidden" aria-hidden="true">
-        <label htmlFor={`${fieldId}-website`}>Website</label>
         <input
-          id={`${fieldId}-website`}
-          name="website"
+          id={`${fieldId}-hp`}
+          name="hp_field"
           type="text"
           tabIndex={-1}
           autoComplete="off"
-          value={website}
-          onChange={(e) => setWebsite(e.target.value)}
+          data-1p-ignore
+          data-lpignore="true"
+          value={trap}
+          onChange={(e) => setTrap(e.target.value)}
         />
       </div>
 

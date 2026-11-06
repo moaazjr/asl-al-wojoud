@@ -9,7 +9,6 @@ import {
   ExternalLink,
   Loader2,
   MessageSquareText,
-  Trash2,
   XCircle,
 } from "lucide-react";
 import type { PublicComment } from "@/interfaces/types";
@@ -17,81 +16,62 @@ import { formatRelativeTime } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  deletePublicComment,
   listPublicComments,
   moderatePublicComment,
 } from "@/features/comments/api";
+import { notifyPublicCommentsChanged } from "../use-pending-comments";
+
+const PREVIEW_COUNT = 5;
 
 export function PendingCommentsPanel() {
   const [comments, setComments] = React.useState<PublicComment[]>([]);
+  const [pendingTotal, setPendingTotal] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
-
-  const load = React.useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await listPublicComments("pending");
-      setComments(data);
-    } catch {
-      setError("تعذّر تحميل التعليقات المعلّقة. حاول تحديث الصفحة.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [reloadKey, setReloadKey] = React.useState(0);
 
   React.useEffect(() => {
-    let active = true;
-    const run = async () => {
-      if (active) await load();
-    };
-    run();
+    let cancelled = false;
+    listPublicComments({ status: "pending", pageSize: PREVIEW_COUNT })
+      .then((res) => {
+        if (cancelled) return;
+        setComments(res.items);
+        setPendingTotal(res.counts.pending);
+        setError(null);
+      })
+      .catch(() => {
+        if (!cancelled)
+          setError("تعذّر تحميل التعليقات المعلّقة. حاول تحديث الصفحة.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
-      active = false;
+      cancelled = true;
     };
-  }, [load]);
+  }, [reloadKey]);
 
-  async function handleModerate(
-    id: string,
-    action: "approve" | "reject",
-  ) {
+  async function handleModerate(id: string, action: "approve" | "reject") {
     setBusyId(id);
     setNotice(null);
     setError(null);
     try {
       await moderatePublicComment(id, action);
-      setComments((prev) => prev.filter((c) => c.id !== id));
       setNotice(
         action === "approve"
           ? "تمت الموافقة على التعليق، وسيظهر الآن في الصفحة العامة."
           : "تم رفض التعليق، ولن يظهر للزوّار.",
       );
+      notifyPublicCommentsChanged();
+      setReloadKey((k) => k + 1);
     } catch {
       setError(
         action === "approve"
           ? "تعذّرت الموافقة على التعليق. حاول مرة أخرى."
           : "تعذّر رفض التعليق. حاول مرة أخرى.",
       );
-      await load();
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm("هل تريد حذف هذا التعليق نهائيًا؟ لا يمكن التراجع.")) return;
-    setBusyId(id);
-    setNotice(null);
-    setError(null);
-    try {
-      await deletePublicComment(id);
-      setComments((prev) => prev.filter((c) => c.id !== id));
-      setNotice("تم حذف التعليق نهائيًا.");
-    } catch {
-      setError("تعذّر حذف التعليق. حاول مرة أخرى.");
-      await load();
     } finally {
       setBusyId(null);
     }
@@ -102,10 +82,10 @@ export function PendingCommentsPanel() {
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <Clock className="h-4 w-4 text-accent" />
         <h2 className="font-kufi text-sm font-semibold text-ink">
-          التعليقات المعلّقة
+          تعليقات بانتظار المراجعة
         </h2>
-        {!loading && !error && comments.length > 0 && (
-          <Badge variant="warning">{comments.length}</Badge>
+        {!loading && !error && pendingTotal > 0 && (
+          <Badge variant="warning">{pendingTotal}</Badge>
         )}
         <Link
           href="/dashboard/comments"
@@ -140,80 +120,75 @@ export function PendingCommentsPanel() {
           <span className="font-kufi text-xs">جارٍ التحميل…</span>
         </div>
       ) : comments.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-8 text-center">
-          <MessageSquareText className="h-5 w-5 text-ink-faint" />
-          <p className="font-kufi text-xs text-ink-faint">
-            لا توجد تعليقات معلّقة — كل التعليقات تمت مراجعتها.
-          </p>
-        </div>
+        error ? null : (
+          <div className="flex flex-col items-center gap-2 py-8 text-center">
+            <MessageSquareText className="h-5 w-5 text-ink-faint" />
+            <p className="font-kufi text-xs text-ink-faint">
+              لا توجد تعليقات معلّقة — كل التعليقات تمت مراجعتها.
+            </p>
+          </div>
+        )
       ) : (
-        <ul className="divide-y divide-line-soft">
-          {comments.map((c) => (
-            <li key={c.id} className="flex flex-col gap-2 py-3 first:pt-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-kufi text-sm font-semibold text-ink">
-                  {c.name}
-                  {c.email && (
-                    <span className="ms-1 font-normal text-ink-faint">
-                      ({c.email})
-                    </span>
-                  )}
-                </span>
-                <span className="ms-auto font-kufi text-[0.65rem] text-ink-faint">
-                  {formatRelativeTime(c.createdAt)}
-                </span>
-              </div>
-              <p className="font-kufi text-xs text-ink-faint">
-                المبحث: {c.bookTitle} — {c.sectionTitle}
-              </p>
-              <p className="whitespace-pre-wrap break-words font-naskh text-sm leading-relaxed text-ink-soft">
-                {c.text}
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => handleModerate(c.id, "approve")}
-                  disabled={busyId === c.id}
-                >
-                  {busyId === c.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  )}
-                  الموافقة
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-rose-600 dark:text-rose-400"
-                  onClick={() => handleModerate(c.id, "reject")}
-                  disabled={busyId === c.id}
-                >
-                  <XCircle className="h-3.5 w-3.5" />
-                  الرفض
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-rose-600 dark:text-rose-400"
-                  onClick={() => handleDelete(c.id)}
-                  disabled={busyId === c.id}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  حذف
-                </Button>
+        <>
+          <ul className="divide-y divide-line-soft">
+            {comments.map((c) => (
+              <li key={c.id} className="flex flex-col gap-2 py-3 first:pt-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-kufi text-sm font-semibold text-ink">
+                    {c.name}
+                  </span>
+                  <span className="ms-auto font-kufi text-[0.65rem] text-ink-faint">
+                    {formatRelativeTime(c.createdAt)}
+                  </span>
+                </div>
                 <Link
                   href={`/${c.sectionId}#section-comments`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ms-auto inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-kufi text-xs text-ink-faint hover:text-ink"
+                  className="w-fit font-kufi text-xs text-ink-faint hover:text-accent"
                 >
-                  فتح المبحث
+                  {c.bookTitle} — {c.sectionTitle}
                 </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
+                <p className="line-clamp-3 whitespace-pre-wrap break-words font-naskh text-sm leading-relaxed text-ink-soft">
+                  {c.text}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => handleModerate(c.id, "approve")}
+                    disabled={busyId === c.id}
+                  >
+                    {busyId === c.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    )}
+                    الموافقة
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-rose-600 dark:text-rose-400"
+                    onClick={() => handleModerate(c.id, "reject")}
+                    disabled={busyId === c.id}
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    الرفض
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {pendingTotal > comments.length && (
+            <Link
+              href="/dashboard/comments"
+              className="mt-2 block text-center font-kufi text-xs font-semibold text-accent hover:underline"
+            >
+              عرض كل التعليقات المعلّقة ({pendingTotal})
+            </Link>
+          )}
+        </>
       )}
     </div>
   );

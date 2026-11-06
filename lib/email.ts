@@ -137,7 +137,7 @@ export async function sendPendingCommentNotification(
       <h1 style="margin:0 0 16px;font-size:20px">تعليق جديد بانتظار موافقتك</h1>
       <p style="margin:0 0 8px"><strong>الاسم:</strong> ${safe.name}</p>
       <p style="margin:0 0 8px"><strong>البريد الإلكتروني:</strong> ${safe.email}</p>
-      <p style="margin:0 0 8px"><strong>المبحث:</strong> ${safe.book} — ${safe.section}</p>
+      <p style="margin:0 0 8px"><strong>المبحث:</strong> <a href="${escapeHtml(`${siteBaseUrl()}/${data.sectionId}`)}" style="color:#8a6d1f">${safe.book} — ${safe.section}</a></p>
       <p style="margin:0 0 8px"><strong>التاريخ:</strong> ${escapeHtml(data.createdAt.toISOString())}</p>
       <blockquote style="margin:12px 0;padding:12px 16px;border-inline-start:3px solid #c9a227;background:#faf7ef;white-space:pre-wrap">${safe.text}</blockquote>
       <p style="margin:16px 0 0">

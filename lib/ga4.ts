@@ -1,16 +1,17 @@
 import "server-only";
-import { BetaAnalyticsDataClient } from "@google-analytics/data";
+import { BetaAnalyticsDataClient, type protos } from "@google-analytics/data";
 import type {
   AnalyticsBreakdownRow,
   AnalyticsDailyPoint,
   AnalyticsOverview,
-  AnalyticsData,
-  AnalyticsRange,
+  AnalyticsPeriod,
+  Ga4Data,
+  Ga4Status,
+  VisitorsSummary,
 } from "@/interfaces/analytics";
 
-const PROPERTY_ID = process.env.GA4_PROPERTY_ID?.trim();
-const CLIENT_EMAIL = process.env.GA4_CLIENT_EMAIL?.trim();
-const PRIVATE_KEY = process.env.GA4_PRIVATE_KEY?.replace(/\\n/g, "\n")?.trim();
+const GA4_START_OF_TIME = "2015-08-14";
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 export const GA4_ENV_KEYS = [
   "GA4_PROPERTY_ID",
@@ -18,42 +19,76 @@ export const GA4_ENV_KEYS = [
   "GA4_PRIVATE_KEY",
 ] as const;
 
+function env() {
+  return {
+    propertyId: process.env.GA4_PROPERTY_ID?.trim() ?? "",
+    clientEmail: process.env.GA4_CLIENT_EMAIL?.trim() ?? "",
+    privateKey: process.env.GA4_PRIVATE_KEY?.replace(/\\n/g, "\n").trim() ?? "",
+  };
+}
+
 export function missingGa4Env(): string[] {
-  return GA4_ENV_KEYS.filter((key) => {
-    const value = process.env[key];
-    return !value || !value.trim();
-  });
+  return GA4_ENV_KEYS.filter((key) => !process.env[key]?.trim());
 }
 
 export function isGa4Configured(): boolean {
-  return Boolean(PROPERTY_ID && CLIENT_EMAIL && PRIVATE_KEY);
+  return missingGa4Env().length === 0;
 }
 
 let cachedClient: BetaAnalyticsDataClient | null = null;
 
 function getClient(): BetaAnalyticsDataClient {
   if (!cachedClient) {
+    const { clientEmail, privateKey } = env();
     cachedClient = new BetaAnalyticsDataClient({
-      credentials: {
-        client_email: CLIENT_EMAIL as string,
-        private_key: PRIVATE_KEY as string,
-      },
+      credentials: { client_email: clientEmail, private_key: privateKey },
     });
   }
   return cachedClient;
 }
 
 type ReportRequest = Parameters<BetaAnalyticsDataClient["runReport"]>[0];
+type ReportResponse = protos.google.analytics.data.v1beta.IRunReportResponse;
 
-async function safeRun(request: ReportRequest) {
+interface RunResult {
+  res: ReportResponse | null;
+  error: unknown;
+}
+
+async function run(label: string, request: ReportRequest): Promise<RunResult> {
   try {
-    const [response] = await getClient().runReport(request);
-    return response;
+    const [res] = await getClient().runReport(request);
+    return { res, error: null };
   } catch (error) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("[ga4] report failed:", request.dimensions, error);
-    }
-    return null;
+    console.error(`[ga4] report "${label}" failed:`, describeError(error).detail);
+    return { res: null, error };
+  }
+}
+
+function describeError(error: unknown): { message: string; detail: string } {
+  const code = (error as { code?: number })?.code;
+  const raw = error instanceof Error ? error.message : String(error);
+  const detail = raw.slice(0, 300);
+  switch (code) {
+    case 7:
+      return {
+        message:
+          "حساب الخدمة لا يملك صلاحية القراءة على خاصية GA4 المحدّدة، أو أن واجهة Google Analytics Data API غير مفعّلة في مشروع Google Cloud.",
+        detail,
+      };
+    case 16:
+      return {
+        message: "بيانات اعتماد حساب الخدمة غير صالحة (GA4_CLIENT_EMAIL / GA4_PRIVATE_KEY).",
+        detail,
+      };
+    case 5:
+      return { message: "خاصية GA4 غير موجودة. تحقّق من GA4_PROPERTY_ID.", detail };
+    case 3:
+      return { message: "طلب غير صالح إلى GA4 Data API.", detail };
+    case 8:
+      return { message: "تم تجاوز حصة طلبات GA4 Data API مؤقتًا. حاول لاحقًا.", detail };
+    default:
+      return { message: "تعذّر الاتصال بـ Google Analytics Data API.", detail };
   }
 }
 
@@ -68,153 +103,257 @@ function formatGaDate(value: string): string {
   return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
 }
 
-const EVENT_FILTER = {
-  filter: {
-    fieldName: "eventName",
-    inListFilter: { values: ["chapter_open", "pdf_download"] },
-  },
-};
+function gaDateRange(period: AnalyticsPeriod) {
+  if (period.key === "custom") {
+    return { startDate: period.startDate, endDate: period.endDate };
+  }
+  const days = period.key === "today" ? 1 : Number(period.key);
+  return {
+    startDate: days === 1 ? "today" : `${days - 1}daysAgo`,
+    endDate: "today",
+  };
+}
 
-export async function fetchAnalytics(range: AnalyticsRange): Promise<AnalyticsData> {
-  const property = `properties/${PROPERTY_ID}`;
-  const dateRanges = [{ startDate: `${range}daysAgo`, endDate: "today" }];
+const SOURCE_GROUPS: { label: string; test: RegExp }[] = [
+  { label: "مباشر", test: /^\(direct\)$/ },
+  { label: "Google", test: /(^|\.)google(\.|$)|^google$/ },
+  { label: "Facebook", test: /facebook|^fb$|^m\.facebook|^l\.facebook|^lm\.facebook/ },
+  { label: "WhatsApp", test: /whatsapp|^wa\.me$|^l\.wl\.co$/ },
+  { label: "Instagram", test: /instagram/ },
+  { label: "X / Twitter", test: /^t\.co$|twitter|^x\.com$/ },
+  { label: "Telegram", test: /telegram|^t\.me$/ },
+  { label: "YouTube", test: /youtube/ },
+  { label: "Bing", test: /bing/ },
+  { label: "غير محدد", test: /^\(not set\)$/ },
+];
 
-  const [overviewRes, eventsRes, dailyRes, dailyEventsRes, pagesRes, chaptersRes, sourcesRes, countriesRes] =
+export function groupSource(source: string): string {
+  const normalized = source.trim().toLowerCase();
+  return SOURCE_GROUPS.find((g) => g.test.test(normalized))?.label ?? source;
+}
+
+function sortedTop(map: Map<string, AnalyticsBreakdownRow>, limit: number) {
+  return Array.from(map.values())
+    .sort((a, b) => b.value - a.value)
+    .slice(0, limit);
+}
+
+const SECTION_PATH = /^\/(\d+)\/[^/]+\/?$/;
+const CHAPTER_PATH = /^\/(\d+)(\/|$)/;
+
+const cache = new Map<string, { at: number; value: Ga4Status }>();
+
+export async function fetchGa4(
+  period: AnalyticsPeriod,
+  { fresh = false }: { fresh?: boolean } = {},
+): Promise<Ga4Status> {
+  const missing = missingGa4Env();
+  if (missing.length > 0) return { state: "not-configured", missing };
+
+  const cacheKey = `${period.key}:${period.startDate}:${period.endDate}`;
+  const hit = cache.get(cacheKey);
+  if (!fresh && hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value;
+
+  const { propertyId } = env();
+  const property = `properties/${propertyId}`;
+  const dateRanges = [gaDateRange(period)];
+  const eventFilter = {
+    filter: {
+      fieldName: "eventName",
+      inListFilter: { values: ["chapter_open", "pdf_download"] },
+    },
+  };
+
+  const [overviewR, visitorsR, eventsR, dailyR, dailyEventsR, pagesR, sourcesR, countriesR] =
     await Promise.all([
-      safeRun({
+      run("overview", {
         property,
         dateRanges,
         metrics: [
           { name: "activeUsers" },
           { name: "totalUsers" },
+          { name: "newUsers" },
           { name: "sessions" },
           { name: "screenPageViews" },
-          { name: "eventCount" },
         ],
       }),
-      safeRun({
+      run("visitors", {
+        property,
+        dateRanges: [
+          { startDate: "today", endDate: "today", name: "today" },
+          { startDate: "6daysAgo", endDate: "today", name: "last7" },
+          { startDate: "29daysAgo", endDate: "today", name: "last30" },
+          { startDate: GA4_START_OF_TIME, endDate: "today", name: "all" },
+        ],
+        metrics: [{ name: "activeUsers" }],
+      }),
+      run("events", {
         property,
         dateRanges,
         dimensions: [{ name: "eventName" }],
         metrics: [{ name: "eventCount" }],
-        dimensionFilter: EVENT_FILTER,
+        dimensionFilter: eventFilter,
       }),
-      safeRun({
+      run("daily", {
         property,
         dateRanges,
         dimensions: [{ name: "date" }],
         metrics: [{ name: "activeUsers" }, { name: "screenPageViews" }],
         orderBys: [{ dimension: { dimensionName: "date" } }],
+        limit: 400,
       }),
-      safeRun({
+      run("daily-events", {
         property,
         dateRanges,
         dimensions: [{ name: "date" }, { name: "eventName" }],
         metrics: [{ name: "eventCount" }],
-        dimensionFilter: EVENT_FILTER,
+        dimensionFilter: eventFilter,
+        limit: 1000,
       }),
-      safeRun({
+      run("pages", {
         property,
         dateRanges,
-        dimensions: [{ name: "pagePath" }],
+        dimensions: [{ name: "pagePath" }, { name: "pageTitle" }],
         metrics: [{ name: "screenPageViews" }],
         orderBys: [{ metric: { metricName: "screenPageViews" }, desc: true }],
-        limit: 10,
+        limit: 500,
       }),
-      safeRun({
-        property,
-        dateRanges,
-        dimensions: [{ name: "pagePath" }],
-        metrics: [{ name: "eventCount" }],
-        dimensionFilter: {
-          filter: { fieldName: "eventName", stringFilter: { value: "chapter_open" } },
-        },
-        orderBys: [{ metric: { metricName: "eventCount" }, desc: true }],
-        limit: 10,
-      }),
-      safeRun({
+      run("sources", {
         property,
         dateRanges,
         dimensions: [{ name: "sessionSource" }],
         metrics: [{ name: "sessions" }],
         orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
-        limit: 10,
+        limit: 100,
       }),
-      safeRun({
+      run("countries", {
         property,
         dateRanges,
         dimensions: [{ name: "country" }],
         metrics: [{ name: "activeUsers" }],
         orderBys: [{ metric: { metricName: "activeUsers" }, desc: true }],
-        limit: 10,
+        limit: 15,
       }),
     ]);
 
-  if (!overviewRes) {
-    throw new Error("GA4 reports failed");
+  if (!overviewR.res) {
+    const { message, detail } = describeError(overviewR.error);
+    return { state: "error", message, detail };
   }
 
-  const overviewRow = overviewRes.rows?.[0];
+  const partialFailures = Object.entries({
+    visitors: visitorsR,
+    events: eventsR,
+    daily: dailyR,
+    dailyEvents: dailyEventsR,
+    pages: pagesR,
+    sources: sourcesR,
+    countries: countriesR,
+  })
+    .filter(([, r]) => !r.res)
+    .map(([name]) => name);
+
+  const ov = overviewR.res.rows?.[0]?.metricValues ?? [];
   const overview: AnalyticsOverview = {
-    activeUsers: toNumber(overviewRow?.metricValues?.[0]?.value),
-    totalUsers: toNumber(overviewRow?.metricValues?.[1]?.value),
-    sessions: toNumber(overviewRow?.metricValues?.[2]?.value),
-    screenPageViews: toNumber(overviewRow?.metricValues?.[3]?.value),
+    activeUsers: toNumber(ov[0]?.value),
+    totalUsers: toNumber(ov[1]?.value),
+    newUsers: toNumber(ov[2]?.value),
+    sessions: toNumber(ov[3]?.value),
+    screenPageViews: toNumber(ov[4]?.value),
     chapterOpen: 0,
     pdfDownload: 0,
   };
-
-  for (const row of eventsRes?.rows ?? []) {
+  for (const row of eventsR.res?.rows ?? []) {
     const name = row.dimensionValues?.[0]?.value;
     const count = toNumber(row.metricValues?.[0]?.value);
     if (name === "chapter_open") overview.chapterOpen = count;
     if (name === "pdf_download") overview.pdfDownload = count;
   }
 
-  const dailyMap = new Map<string, AnalyticsDailyPoint>();
-  for (const row of dailyRes?.rows ?? []) {
-    const date = formatGaDate(row.dimensionValues?.[0]?.value ?? "");
-    dailyMap.set(date, {
-      date,
-      activeUsers: toNumber(row.metricValues?.[0]?.value),
-      screenPageViews: toNumber(row.metricValues?.[1]?.value),
-      chapterOpen: 0,
-      pdfDownload: 0,
-    });
+  const visitors: VisitorsSummary = { today: 0, last7Days: 0, last30Days: 0, allTime: 0 };
+  for (const row of visitorsR.res?.rows ?? []) {
+    const name = row.dimensionValues?.[0]?.value;
+    const value = toNumber(row.metricValues?.[0]?.value);
+    if (name === "today") visitors.today = value;
+    if (name === "last7") visitors.last7Days = value;
+    if (name === "last30") visitors.last30Days = value;
+    if (name === "all") visitors.allTime = value;
   }
-  for (const row of dailyEventsRes?.rows ?? []) {
-    const date = formatGaDate(row.dimensionValues?.[0]?.value ?? "");
+
+  const dailyMap = new Map<string, AnalyticsDailyPoint>();
+  const point = (date: string) => {
+    let p = dailyMap.get(date);
+    if (!p) {
+      p = { date, activeUsers: 0, screenPageViews: 0, chapterOpen: 0, pdfDownload: 0 };
+      dailyMap.set(date, p);
+    }
+    return p;
+  };
+  for (const row of dailyR.res?.rows ?? []) {
+    const p = point(formatGaDate(row.dimensionValues?.[0]?.value ?? ""));
+    p.activeUsers = toNumber(row.metricValues?.[0]?.value);
+    p.screenPageViews = toNumber(row.metricValues?.[1]?.value);
+  }
+  for (const row of dailyEventsR.res?.rows ?? []) {
+    const p = point(formatGaDate(row.dimensionValues?.[0]?.value ?? ""));
     const name = row.dimensionValues?.[1]?.value;
     const count = toNumber(row.metricValues?.[0]?.value);
-    const point =
-      dailyMap.get(date) ??
-      { date, activeUsers: 0, screenPageViews: 0, chapterOpen: 0, pdfDownload: 0 };
-    if (name === "chapter_open") point.chapterOpen = count;
-    if (name === "pdf_download") point.pdfDownload = count;
-    dailyMap.set(date, point);
+    if (name === "chapter_open") p.chapterOpen = count;
+    if (name === "pdf_download") p.pdfDownload = count;
   }
   const daily = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
 
-  const toBreakdown = (
-    res: Awaited<ReturnType<typeof safeRun>>,
-  ): AnalyticsBreakdownRow[] =>
-    (res?.rows ?? [])
+  const pages = new Map<string, AnalyticsBreakdownRow>();
+  const sections = new Map<string, AnalyticsBreakdownRow>();
+  const chapters = new Map<string, AnalyticsBreakdownRow>();
+  for (const row of pagesR.res?.rows ?? []) {
+    const path = row.dimensionValues?.[0]?.value ?? "";
+    const title = (row.dimensionValues?.[1]?.value ?? "").replace(/\s*·\s*أصل الوجود\s*$/, "");
+    const views = toNumber(row.metricValues?.[0]?.value);
+    if (!path) continue;
+    const add = (map: Map<string, AnalyticsBreakdownRow>, key: string, label: string, hint?: string) => {
+      const existing = map.get(key);
+      if (existing) existing.value += views;
+      else map.set(key, { label, value: views, hint });
+    };
+    add(pages, path, title && title !== "(not set)" ? title : path, path);
+    if (SECTION_PATH.test(path)) add(sections, path, title || path, path);
+    const chapter = CHAPTER_PATH.exec(path)?.[1];
+    if (chapter) add(chapters, chapter, `الباب ${chapter}`, `/${chapter}`);
+  }
+
+  const rawSources: AnalyticsBreakdownRow[] = (sourcesR.res?.rows ?? []).map((row) => ({
+    label: row.dimensionValues?.[0]?.value ?? "",
+    value: toNumber(row.metricValues?.[0]?.value),
+  }));
+  const grouped = new Map<string, AnalyticsBreakdownRow>();
+  for (const s of rawSources) {
+    const label = groupSource(s.label);
+    const existing = grouped.get(label);
+    if (existing) existing.value += s.value;
+    else grouped.set(label, { label, value: s.value });
+  }
+
+  const data: Ga4Data = {
+    propertyId,
+    overview,
+    visitors,
+    daily,
+    topPages: sortedTop(pages, 10),
+    topSections: sortedTop(sections, 10),
+    topChapters: sortedTop(chapters, 10),
+    sources: sortedTop(grouped, 10),
+    rawSources: rawSources.slice(0, 15),
+    countries: (countriesR.res?.rows ?? [])
       .map((row) => ({
         label: row.dimensionValues?.[0]?.value ?? "",
         value: toNumber(row.metricValues?.[0]?.value),
       }))
-      .filter((row) => row.label);
-
-  return {
-    configured: true,
-    range,
-    propertyId: PROPERTY_ID ?? "",
-    generatedAt: new Date().toISOString(),
-    overview,
-    daily,
-    topPages: toBreakdown(pagesRes),
-    topChapters: toBreakdown(chaptersRes),
-    sources: toBreakdown(sourcesRes),
-    countries: toBreakdown(countriesRes),
+      .filter((r) => r.label),
+    partialFailures,
   };
+
+  const value: Ga4Status = { state: "ok", data };
+  cache.set(cacheKey, { at: Date.now(), value });
+  return value;
 }

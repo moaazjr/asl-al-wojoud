@@ -170,7 +170,7 @@ export function MessageItem({
             <>
               <div
                 className={`w-fit max-w-full rounded-2xl px-3.5 py-2.5 ${
-                  isAdmin && !isPublic
+                  isAdmin
                     ? "bg-accent-soft/50 ring-1 ring-accent/10"
                     : "bg-paper-deep/70 dark:bg-paper-deep/40"
                 }`}
@@ -185,7 +185,7 @@ export function MessageItem({
                   <span className="font-kufi text-[0.8rem] font-bold text-ink">
                     {message.authorName}
                   </span>
-                  {isAdmin && !isPublic && (
+                  {isAdmin && (
                     <span className="inline-flex items-center gap-0.5">
                       <Badge variant="admin" className="px-1.5 py-0 text-[0.55rem]">
                         مشرف
