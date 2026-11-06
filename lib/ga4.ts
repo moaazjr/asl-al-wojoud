@@ -41,6 +41,7 @@ function getClient(): BetaAnalyticsDataClient {
   if (!cachedClient) {
     const { clientEmail, privateKey } = env();
     cachedClient = new BetaAnalyticsDataClient({
+      fallback: true,
       credentials: { client_email: clientEmail, private_key: privateKey },
     });
   }
@@ -55,14 +56,31 @@ interface RunResult {
   error: unknown;
 }
 
+const MAX_ATTEMPTS = 3;
+const RETRYABLE_CODES = new Set([4, 13, 14]);
+
+function isRetryable(error: unknown): boolean {
+  const code = (error as { code?: number | string })?.code;
+  if (typeof code === "number") return RETRYABLE_CODES.has(code);
+  return true;
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function run(label: string, request: ReportRequest): Promise<RunResult> {
-  try {
-    const [res] = await getClient().runReport(request);
-    return { res, error: null };
-  } catch (error) {
-    console.error(`[ga4] report "${label}" failed:`, describeError(error).detail);
-    return { res: null, error };
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const [res] = await getClient().runReport(request, { timeout: 20_000 });
+      return { res, error: null };
+    } catch (error) {
+      lastError = error;
+      if (!isRetryable(error) || attempt === MAX_ATTEMPTS) break;
+      await sleep(400 * attempt);
+    }
   }
+  console.error(`[ga4] report "${label}" failed:`, describeError(lastError).detail);
+  return { res: null, error: lastError };
 }
 
 function describeError(error: unknown): { message: string; detail: string } {
@@ -87,8 +105,17 @@ function describeError(error: unknown): { message: string; detail: string } {
       return { message: "طلب غير صالح إلى GA4 Data API.", detail };
     case 8:
       return { message: "تم تجاوز حصة طلبات GA4 Data API مؤقتًا. حاول لاحقًا.", detail };
+    case 4:
+    case 14:
+      return {
+        message: "انتهت مهلة الاتصال بـ Google Analytics أو أن الخدمة غير متاحة مؤقتًا. أعد المحاولة بعد قليل.",
+        detail,
+      };
     default:
-      return { message: "تعذّر الاتصال بـ Google Analytics Data API.", detail };
+      return {
+        message: "تعذّر الاتصال بـ Google Analytics Data API (مشكلة شبكة على الأغلب). أعد المحاولة بعد قليل.",
+        detail: code !== undefined ? `[${String(code)}] ${detail}` : detail,
+      };
   }
 }
 

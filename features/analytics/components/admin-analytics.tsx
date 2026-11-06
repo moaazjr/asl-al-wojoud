@@ -308,9 +308,10 @@ function Ga4Block({ data, rangeKey }: { data: Ga4Data; rangeKey: AnalyticsRangeK
               الاتصال بـ GA4 يعمل، لكن الخاصية {data.propertyId} لم تسجّل أي زيارة على الإطلاق.
             </p>
             <p className="text-xs leading-relaxed">
-              غالبًا معرّف القياس المستخدم في الموقع (NEXT_PUBLIC_GA_MEASUREMENT_ID) يتبع خاصية أخرى.
-              افتح Google Analytics ← المشرف ← مصادر البيانات، وتأكّد أن مصدر الويب الذي يحمل معرّف القياس
-              المستخدم موجود داخل الخاصية ذات المعرّف الرقمي {data.propertyId}، أو حدّث GA4_PROPERTY_ID.
+              إن كان الموقع قد نُشر حديثًا بمعرّف القياس الصحيح، فهذا طبيعي: يعالج Google Analytics البيانات
+              خلال 24 إلى 48 ساعة، ويمكنك رؤية الزيارات الحالية فورًا من «التقارير ← الوقت الفعلي» داخل GA4.
+              إن استمرّ ذلك أكثر من يومين، فتأكّد أن معرّف القياس في الموقع (NEXT_PUBLIC_GA_MEASUREMENT_ID)
+              هو نفسه معرّف مصدر البيانات داخل الخاصية {data.propertyId}.
             </p>
           </div>
         </div>
