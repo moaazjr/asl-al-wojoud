@@ -330,9 +330,24 @@ function Ga4Block({ data, rangeKey }: { data: Ga4Data; rangeKey: AnalyticsRangeK
         </div>
       )}
       {data.partialFailures.length > 0 && (
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 font-kufi text-xs text-amber-700 dark:text-amber-400">
-          تعذّر تحميل بعض التقارير ({data.partialFailures.join("، ")}). القيم المعروضة الأخرى صحيحة.
-        </p>
+        <div className="space-y-1 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 font-kufi text-xs text-amber-700 dark:text-amber-400">
+          <p>
+            تعذّر تحميل بعض التقارير ({data.partialFailures.join("، ")}). القيم المعروضة الأخرى صحيحة.
+            اضغط «تحديث» لإعادة المحاولة.
+          </p>
+          {data.partialFailureDetails && data.partialFailureDetails.length > 0 && (
+            <details>
+              <summary className="cursor-pointer">تفاصيل الخطأ من Google</summary>
+              <ul className="mt-1 space-y-1">
+                {data.partialFailureDetails.map((f) => (
+                  <li key={f.report} dir="ltr" className="break-all text-start font-mono text-[0.7rem]">
+                    <span className="font-semibold">{f.report}</span>: {f.detail || f.message}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
       )}
 
       <section aria-labelledby="visitors-heading" className="space-y-3">

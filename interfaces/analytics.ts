@@ -109,6 +109,7 @@ export interface Ga4Data {
   rawSources: AnalyticsBreakdownRow[];
   countries: AnalyticsBreakdownRow[];
   partialFailures: string[];
+  partialFailureDetails?: { report: string; message: string; detail: string }[];
 }
 
 export type Ga4Status =

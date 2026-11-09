@@ -57,11 +57,34 @@ interface RunResult {
   error: unknown;
 }
 
-const MAX_ATTEMPTS = 3;
-const RETRYABLE_CODES = new Set([4, 13, 14]);
+const MAX_ATTEMPTS = 4;
+const RETRYABLE_CODES = new Set([4, 8, 13, 14]);
+const MAX_CONCURRENT = 3;
+
+let active = 0;
+const waiting: (() => void)[] = [];
+
+async function withSlot<T>(task: () => Promise<T>): Promise<T> {
+  if (active >= MAX_CONCURRENT) {
+    await new Promise<void>((resolve) => waiting.push(resolve));
+  }
+  active++;
+  try {
+    return await task();
+  } finally {
+    active--;
+    waiting.shift()?.();
+  }
+}
+
+function isDailyQuota(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /tokens per day|per day/i.test(message);
+}
 
 function isRetryable(error: unknown): boolean {
   const code = (error as { code?: number | string })?.code;
+  if (code === 8 && isDailyQuota(error)) return false;
   if (typeof code === "number") return RETRYABLE_CODES.has(code);
   return true;
 }
@@ -72,12 +95,13 @@ async function run(label: string, request: ReportRequest): Promise<RunResult> {
   let lastError: unknown = null;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      const [res] = await getClient().runReport(request, { timeout: 20_000 });
+      const [res] = await withSlot(() => getClient().runReport(request, { timeout: 20_000 }));
       return { res, error: null };
     } catch (error) {
       lastError = error;
       if (!isRetryable(error) || attempt === MAX_ATTEMPTS) break;
-      await sleep(400 * attempt);
+      const code = (error as { code?: number })?.code;
+      await sleep((code === 8 ? 1500 : 400) * attempt);
     }
   }
   console.error(`[ga4] report "${label}" failed:`, describeError(lastError).detail);
@@ -177,10 +201,23 @@ const SECTION_PATH = /^\/(\d+)\/[^/]+\/?$/;
 const CHAPTER_PATH = /^\/(\d+)(\/|$)/;
 
 const cache = new Map<string, { at: number; value: Ga4Status }>();
+const inFlight = new Map<string, Promise<Ga4Status>>();
 
 export async function fetchGa4(
   period: AnalyticsPeriod,
   { fresh = false }: { fresh?: boolean } = {},
+): Promise<Ga4Status> {
+  const key = `${period.key}:${period.startDate}:${period.endDate}`;
+  const pending = inFlight.get(key);
+  if (pending) return pending;
+  const promise = fetchGa4Uncached(period, fresh).finally(() => inFlight.delete(key));
+  inFlight.set(key, promise);
+  return promise;
+}
+
+async function fetchGa4Uncached(
+  period: AnalyticsPeriod,
+  fresh: boolean,
 ): Promise<Ga4Status> {
   const missing = missingGa4Env();
   if (missing.length > 0) return { state: "not-configured", missing };
@@ -276,11 +313,12 @@ export async function fetchGa4(
       }),
     ]);
 
-  const realtimeActiveUsers = await getClient()
-    .runRealtimeReport(
+  const realtimeActiveUsers = await withSlot(() =>
+    getClient().runRealtimeReport(
       { property, metrics: [{ name: "activeUsers" }], minuteRanges: [{ startMinutesAgo: 29, endMinutesAgo: 0 }] },
       { timeout: 15_000 },
-    )
+    ),
+  )
     .then(([rt]) => toNumber(rt.rows?.[0]?.metricValues?.[0]?.value))
     .catch((error: unknown) => {
       console.error("[ga4] realtime report failed:", describeError(error).detail);
@@ -292,7 +330,7 @@ export async function fetchGa4(
     return { state: "error", message, detail };
   }
 
-  const partialFailures = Object.entries({
+  const failed = Object.entries({
     visitors: visitorsR,
     events: eventsR,
     daily: dailyR,
@@ -301,8 +339,12 @@ export async function fetchGa4(
     sources: sourcesR,
     countries: countriesR,
   })
-    .filter(([, r]) => !r.res)
-    .map(([name]) => name);
+    .filter(([, r]) => !r.res);
+  const partialFailures = failed.map(([name]) => name);
+  const partialFailureDetails = failed.map(([name, r]) => {
+    const { message, detail } = describeError(r.error);
+    return { report: name, message, detail };
+  });
 
   const ov = overviewR.res.rows?.[0]?.metricValues ?? [];
   const overview: AnalyticsOverview = {
@@ -403,9 +445,10 @@ export async function fetchGa4(
       }))
       .filter((r) => r.label),
     partialFailures,
+    partialFailureDetails,
   };
 
   const value: Ga4Status = { state: "ok", data };
-  cache.set(cacheKey, { at: Date.now(), value });
+  if (partialFailures.length === 0) cache.set(cacheKey, { at: Date.now(), value });
   return value;
 }
