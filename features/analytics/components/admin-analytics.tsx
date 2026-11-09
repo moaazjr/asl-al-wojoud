@@ -314,7 +314,7 @@ function Ga4Block({ data, rangeKey }: { data: Ga4Data; rangeKey: AnalyticsRangeK
             <p className="text-xs leading-relaxed">
               إن كان الموقع قد نُشر حديثًا بمعرّف القياس الصحيح، فهذا طبيعي: يعالج Google Analytics البيانات
               خلال 24 إلى 48 ساعة، ويمكنك رؤية الزيارات الحالية فورًا من «التقارير ← الوقت الفعلي» داخل GA4.
-              إن استمرّ ذلك أكثر من يومين، فتأكّد أن معرّف القياس في الموقع (NEXT_PUBLIC_GA_MEASUREMENT_ID)
+              إن استمرّ ذلك أكثر من يومين، فتأكّد أن معرّف القياس في الموقع (G-QQHBWPCYLE)
               هو نفسه معرّف مصدر البيانات داخل الخاصية {data.propertyId}.
             </p>
           </div>

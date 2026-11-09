@@ -99,7 +99,7 @@ function describeError(error: unknown): { message: string; detail: string } {
     case 7:
       return {
         message:
-          "حساب الخدمة لا يملك صلاحية القراءة على خاصية GA4 المحدّدة، أو أن واجهة Google Analytics Data API غير مفعّلة في مشروع Google Cloud.",
+          `حساب الخدمة ${process.env.GA4_CLIENT_EMAIL?.trim() || "(GA4_CLIENT_EMAIL)"} لا يملك صلاحية القراءة على الخاصية ${process.env.GA4_PROPERTY_ID?.trim() || ""}. أضِفه من Google Analytics ← Admin ← Property access management بدور Viewer، أو تأكّد أن Google Analytics Data API مفعّلة في مشروع Google Cloud.`,
         detail,
       };
     case 16:
