@@ -10,10 +10,10 @@ export function HeroBook() {
           <span>أصل الوجود</span>
         </div>
         <Image
-          src="/asl-alwujoud-hd.jpg"
+          src="/asl-alwujoud-cover.jpg"
           alt="غلاف كتاب أصل الوجود"
-          width={1066}
-          height={1600}
+          width={1024}
+          height={1536}
           sizes="(min-width: 1024px) 152px, (min-width: 640px) 136px, 104px"
           quality={90}
           priority
