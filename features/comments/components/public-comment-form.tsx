@@ -15,10 +15,16 @@ export function PublicCommentForm({
   sectionId,
   sectionTitle,
   bookTitle,
+  placeholder = "اكتب تعليقًا على هذا المبحث…",
+  autoFocus = false,
+  source = "chapter_end",
 }: {
   sectionId: string;
   sectionTitle: string;
   bookTitle: string;
+  placeholder?: string;
+  autoFocus?: boolean;
+  source?: string;
 }) {
   const fieldId = React.useId();
   const [name, setName] = React.useState("");
@@ -66,6 +72,7 @@ export function PublicCommentForm({
         form_name: "comment",
         form_type: "public_comment",
         section_id: sectionId,
+        source,
       });
       setName("");
       setEmail("");
@@ -164,7 +171,8 @@ export function PublicCommentForm({
           maxLength={MAX_TEXT}
           rows={4}
           required
-          placeholder="اكتب تعليقًا على هذا المبحث…"
+          placeholder={placeholder}
+          autoFocus={autoFocus}
           aria-invalid={error != null && !text.trim()}
           aria-describedby={error ? errorId : undefined}
         />

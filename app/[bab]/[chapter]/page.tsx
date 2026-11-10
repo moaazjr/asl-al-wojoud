@@ -14,6 +14,7 @@ import { CitationBox } from "@/components/content/citation-box";
 import { BookDownloadCta } from "@/components/analytics/book-download-cta";
 import { FullBookDownloadButton } from "@/components/analytics/full-book-download-button";
 import { SectionComments } from "@/features/discussions/components/section-comments";
+import { FloatingCommentButton } from "@/features/comments/components/floating-comment-button";
 import { getAdjacentChapters, getAllChapterSlugs, getBook, getChapter, getChapterExcerpt } from "@/lib/content";
 import { chapterJsonLd, serializeJsonLd } from "@/lib/jsonld";
 import { toUthmaniQuranSpans } from "@/lib/quran-uthmani";
@@ -189,6 +190,8 @@ export default async function ChapterPage({
       </section>
 
       <PrevNextNav prev={prev} next={next} />
+
+      <FloatingCommentButton sectionId={`${bab}/${chapter}`} />
     </>
   );
 }
