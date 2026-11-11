@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Settings, MessageSquareOff, Lock, Unlock } from "lucide-react";
+import { Settings, MessageSquare, MessageSquareOff, Lock, Unlock } from "lucide-react";
 import { useSettings } from "@/features/settings/settings-context";
 import { useAuth } from "@/features/auth/use-auth";
 import { permissions } from "@/services/permissions";
@@ -37,19 +37,32 @@ export function CommentSettings() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquareOff className="h-4 w-4 text-ink-faint" />
+            {settings.commentsEnabled ? (
+              <MessageSquare className="h-4 w-4 text-accent" />
+            ) : (
+              <MessageSquareOff className="h-4 w-4 text-rose-500 dark:text-rose-400" />
+            )}
             <div>
               <p className="font-kufi text-sm font-semibold text-ink">
-                تعطيل التعليقات
+                السماح بالتعليقات
               </p>
-              <p className="font-kufi text-xs text-ink-faint">
-                منع جميع المستخدمين من إضافة تعليقات جديدة
+              <p
+                className={`font-kufi text-xs ${
+                  settings.commentsEnabled
+                    ? "text-ink-faint"
+                    : "text-rose-600 dark:text-rose-400"
+                }`}
+              >
+                {settings.commentsEnabled
+                  ? "مفعّلة — يستطيع الزوار إضافة تعليقات جديدة"
+                  : "متوقفة — لا يستطيع الزوار إضافة أي تعليق"}
               </p>
             </div>
           </div>
           <button
             type="button"
             role="switch"
+            aria-label="السماح بالتعليقات"
             aria-checked={settings.commentsEnabled}
             onClick={() => setCommentsEnabled(!settings.commentsEnabled)}
             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
