@@ -3,8 +3,10 @@ import { errorResponse, requireAdmin } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 import { fetchGa4 } from "@/lib/ga4";
 import {
+  isoDateInZone,
   resolvePeriod,
   shiftIsoDate,
+  startOfDayInZone,
   type AnalyticsPeriod,
   type AnalyticsResponse,
   type CommentStats,
@@ -13,8 +15,8 @@ import {
 export const dynamic = "force-dynamic";
 
 async function loadCommentStats(period: AnalyticsPeriod): Promise<CommentStats> {
-  const from = new Date(`${period.startDate}T00:00:00.000Z`);
-  const to = new Date(`${shiftIsoDate(period.endDate, 1)}T00:00:00.000Z`);
+  const from = startOfDayInZone(period.startDate);
+  const to = startOfDayInZone(shiftIsoDate(period.endDate, 1));
 
   const [grouped, inPeriod] = await Promise.all([
     prisma.publicComment.groupBy({ by: ["status"], _count: { _all: true } }),
@@ -45,7 +47,7 @@ async function loadCommentStats(period: AnalyticsPeriod): Promise<CommentStats> 
     byDay.set(d, 0);
   }
   for (const { createdAt } of inPeriod) {
-    const key = createdAt.toISOString().slice(0, 10);
+    const key = isoDateInZone(createdAt);
     byDay.set(key, (byDay.get(key) ?? 0) + 1);
   }
   stats.daily = Array.from(byDay, ([date, value]) => ({ date, value }));

@@ -20,8 +20,46 @@ function isValidIsoDate(value: string): boolean {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
 }
 
+export const ANALYTICS_TIME_ZONE = "Asia/Damascus";
+
+const zoneParts = new Intl.DateTimeFormat("en-US", {
+  timeZone: ANALYTICS_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+});
+
+function partsInZone(date: Date) {
+  const map: Record<string, number> = {};
+  for (const p of zoneParts.formatToParts(date)) {
+    if (p.type !== "literal") map[p.type] = Number(p.value);
+  }
+  return map;
+}
+
+function zoneOffsetMs(date: Date): number {
+  const p = partsInZone(date);
+  const asUtc = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+  return asUtc - Math.floor(date.getTime() / 1000) * 1000;
+}
+
+export function isoDateInZone(date: Date): string {
+  const p = partsInZone(date);
+  return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
+}
+
+export function startOfDayInZone(iso: string): Date {
+  const guess = Date.parse(`${iso}T00:00:00Z`);
+  const first = guess - zoneOffsetMs(new Date(guess));
+  return new Date(guess - zoneOffsetMs(new Date(first)));
+}
+
 export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return isoDateInZone(new Date());
 }
 
 export function shiftIsoDate(iso: string, days: number): string {
