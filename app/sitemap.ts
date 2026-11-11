@@ -1,20 +1,25 @@
 import type { MetadataRoute } from "next";
-import { statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { getAllChapterSlugs, getToc } from "@/lib/content";
+import { latestDate, latestDateFor, type LastmodMap } from "@/lib/content-lastmod";
 import { siteConfig } from "@/data/site";
 
-function contentLastModified(): Date {
+function loadLastmod(): LastmodMap {
   try {
-    return statSync(resolve(process.cwd(), "data/generated/toc.json")).mtime;
+    return JSON.parse(
+      readFileSync(resolve(process.cwd(), "data/generated/lastmod.json"), "utf8"),
+    );
   } catch {
-    return new Date(siteConfig.datePublished);
+    return {};
   }
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteConfig.url;
-  const lastModified = contentLastModified();
+  const lastmod = loadLastmod();
+  const contentLatest = latestDate(lastmod);
+  const withContentDate = new Set(["/", "/toc"]);
   const staticPages: [string, number][] = [
     ["/", 1],
     ["/toc", 0.9],
@@ -32,24 +37,31 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const routes: MetadataRoute.Sitemap = staticPages.map(([path, priority]) => ({
     url: `${base}${path}`,
-    lastModified,
+    lastModified: withContentDate.has(path) ? contentLatest : undefined,
     priority,
     changeFrequency: "monthly",
   }));
 
+  const chapters = getAllChapterSlugs();
+
   for (const book of getToc()) {
+    const chapterDates = chapters
+      .filter((c) => c.bookNumber === book.number)
+      .map((c) => latestDateFor(lastmod, c.slug))
+      .filter((d): d is string => Boolean(d))
+      .sort();
     routes.push({
       url: `${base}/${book.number}`,
-      lastModified,
+      lastModified: chapterDates.at(-1),
       priority: 0.8,
       changeFrequency: "monthly",
     });
   }
 
-  for (const { bookNumber, slug } of getAllChapterSlugs()) {
+  for (const { bookNumber, slug } of chapters) {
     routes.push({
       url: `${base}/${bookNumber}/${slug}`,
-      lastModified,
+      lastModified: latestDateFor(lastmod, slug),
       priority: 0.7,
       changeFrequency: "monthly",
     });

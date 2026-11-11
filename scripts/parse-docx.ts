@@ -1,6 +1,7 @@
 import AdmZip from "adm-zip";
-import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { updateLastmod, type LastmodMap } from "../lib/content-lastmod";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const SOURCE_DIR = resolve(ROOT, "source");
@@ -382,6 +383,8 @@ function main() {
     readingTime: number;
   }[] = [];
 
+  const allSections: { slug: string; title: string; desc?: string; blocks: unknown }[] = [];
+
   for (let n = 0; n <= BOOK_COUNT; n++) {
     const nodes = allNodes.filter((x) => x.bookNumber === n);
     const sectionsOut = nodes.map((node) => {
@@ -396,6 +399,7 @@ function main() {
       JSON.stringify(sectionsOut, null, 2),
       "utf8",
     );
+    allSections.push(...sectionsOut);
     for (const s of sectionsOut) {
       flatList.push({
         num: s.num,
@@ -411,6 +415,18 @@ function main() {
     }
   }
   console.log("Wrote book-*.json");
+
+  const lastmodPath = resolve(OUT_DIR, "lastmod.json");
+  const previousLastmod: LastmodMap = existsSync(lastmodPath)
+    ? JSON.parse(readFileSync(lastmodPath, "utf8"))
+    : {};
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Damascus" }).format(new Date());
+  const lastmod = updateLastmod(previousLastmod, allSections, today);
+  writeFileSync(lastmodPath, JSON.stringify(lastmod, null, 2), "utf8");
+  const changed = Object.entries(lastmod).filter(
+    ([slug, entry]) => previousLastmod[slug]?.hash !== entry.hash,
+  ).length;
+  console.log(`Wrote lastmod.json (${changed} sections changed)`);
 
   const flatWithNav = flatList.map((s, i) => ({
     ...s,
