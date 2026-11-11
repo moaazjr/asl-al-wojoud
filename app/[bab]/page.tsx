@@ -7,6 +7,7 @@ import { SectionList } from "@/components/content/section-list";
 import { Button } from "@/components/ui/button";
 import { BookDownloadCta } from "@/components/analytics/book-download-cta";
 import { getBook } from "@/lib/content";
+import { ogImages, twitterShare } from "@/lib/share-image";
 import { siteConfig } from "@/data/site";
 import { breadcrumbJsonLd, serializeJsonLd } from "@/lib/jsonld";
 import { ChapterListTracker } from "./chapter-tracker";
@@ -30,8 +31,8 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: `/${book.number}` },
-    openGraph: { url: `/${book.number}`, title, description },
-    twitter: { title, description },
+    openGraph: { url: `/${book.number}`, title, description, images: ogImages },
+    twitter: { ...twitterShare, title, description },
   };
 }
 

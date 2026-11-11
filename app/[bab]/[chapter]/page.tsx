@@ -16,6 +16,7 @@ import { FullBookDownloadButton } from "@/components/analytics/full-book-downloa
 import { SectionComments } from "@/features/discussions/components/section-comments";
 import { FloatingCommentButton } from "@/features/comments/components/floating-comment-button";
 import { getAdjacentChapters, getAllChapterSlugs, getBook, getChapter, getChapterExcerpt } from "@/lib/content";
+import { ogImages, twitterShare } from "@/lib/share-image";
 import { chapterJsonLd, serializeJsonLd } from "@/lib/jsonld";
 import { toUthmaniQuranSpans } from "@/lib/quran-uthmani";
 
@@ -48,8 +49,9 @@ export async function generateMetadata({
       title,
       description,
       section: ch.bookTitleOnly,
+      images: ogImages,
     },
-    twitter: { title, description },
+    twitter: { ...twitterShare, title, description },
   };
 }
 

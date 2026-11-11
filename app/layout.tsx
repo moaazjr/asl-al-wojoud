@@ -14,6 +14,7 @@ import { GoogleAdsTag } from "@/components/analytics/google-ads-tag";
 import { ChapterTracker } from "@/components/analytics/chapter-tracker";
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { siteConfig } from "@/data/site";
+import { ogImages, twitterShare } from "@/lib/share-image";
 import { getStats } from "@/lib/content";
 import { bookJsonLd, serializeJsonLd } from "@/lib/jsonld";
 import "./globals.css";
@@ -54,9 +55,10 @@ export const metadata: Metadata = {
     siteName: siteConfig.title,
     title: siteConfig.seoTitle,
     description: siteConfig.description,
+    images: ogImages,
   },
   twitter: {
-    card: "summary_large_image",
+    ...twitterShare,
     title: siteConfig.seoTitle,
     description: siteConfig.description,
   },
